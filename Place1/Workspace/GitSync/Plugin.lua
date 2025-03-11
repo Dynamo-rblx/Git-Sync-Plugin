@@ -115,13 +115,13 @@ local settingBTN_template = settingsuiClone.Frame.ScrollingFrame.template
 
 
 local textbox = frame.repoBOX
-textbox.Text = erepo
+textbox.PlaceholderText = erepo
 
 local tokenBox = frame.tokenBOX
-tokenBox.Text = key
+tokenBox.PlaceholderText = key
 
 local branchBox = settingsuiClone.Frame.branchBOX
-branchBox.Text = branch
+branchBox.PlaceholderText = branch
 
 frame.Close.MouseButton1Click:Connect(function()
 	isOpenUI = not isOpenUI
