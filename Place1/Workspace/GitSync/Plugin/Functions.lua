@@ -12,6 +12,57 @@ local Functions = {}
 
 
 
+function Functions.confirm(pluginVar, attempt:string): boolean
+	local plugin = pluginVar
+	
+	local widgetInfo = DockWidgetPluginGuiInfo.new(
+		Enum.InitialDockState.Float, true, false, 300, 200, 353,194
+	)
+	local confirm_widget = plugin:CreateDockWidgetPluginGui("GitHubSyncConfirmer", widgetInfo)
+	confirm_widget.Title = "Git Confirm - "..attempt.." - "..Settings.Branch
+	local confirm_frame = script.Parent.ConfirmWindow:Clone()
+	confirm_frame.Parent = confirm_widget
+	confirm_frame.Size = UDim2.fromScale(1,1)
+	
+	local confirmed = -1 -- No input
+	
+	local function setTrue()
+		confirmed = 1 -- true
+	end
+	
+	local function setFalse()
+		confirmed = 0 -- false
+	end
+	
+	local c, d = confirm_frame.Confirm.MouseButton1Click:Connect(setTrue), confirm_frame.Cancel.MouseButton1Click:Connect(setFalse)
+	confirm_frame.Warning.Text = "Are you sure you want to "..attempt.."?"
+	
+	repeat task.wait() until confirmed == 1 or confirmed == 0
+	c:Disconnect()
+	d:Disconnect()
+	
+	if confirmed == 0 then
+		confirm_frame.Warning.Text = "Attempt to "..attempt.." cancelled."
+		confirm_frame.Warning.TextColor3 = Color3.fromRGB(248, 81, 73)
+	else
+		confirm_frame.Warning.Text = "Attempt to "..attempt.." confirmed."
+		confirm_frame.Warning.TextColor3 = Color3.fromRGB(63, 185, 80)
+	end
+	
+	task.wait(.6)
+	
+	confirm_widget:Destroy()
+	
+	if confirmed == 0 then
+		return false
+	else
+		return true
+	end
+	
+end
+
+
+
 
 
 function Functions.getScriptPath(scriptFile)
