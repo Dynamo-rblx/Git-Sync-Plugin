@@ -89,10 +89,20 @@ function Interactions.pullFromGitHub(repo, token, pullButton)
 	
 	local contents = Functions.getRepoContents(repo, token, "", pullButton)
 	if contents then
-		local rootFolder = Instance.new("Folder")
 		local directory = string.split(repo, "/")
-		rootFolder.Name = directory[2]
-		rootFolder.Parent = workspace
+		local rootFolder;
+		--[[
+		directory[1] is owner
+		directory[2] is repo
+		directory[3] is place name
+		directory[4] is service name
+		]]
+		if game:FindFirstChild(directory[4]) then
+			rootFolder = game[directory[4]]
+		else
+			rootFolder = Instance.new("Folder", workspace)
+			rootFolder.Name = directory[4]
+		end
 		
 		--print(repo)
 		--print(contents)

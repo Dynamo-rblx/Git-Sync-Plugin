@@ -255,6 +255,7 @@ end
 function Functions.createStructure(parent, contents, repo, token, pullButton)
 	for _, item in pairs(contents) do
 		if item.type == "dir" then
+			
 			print("dir")
 			local folder = Instance.new("Folder")
 			folder.Name = item.name
