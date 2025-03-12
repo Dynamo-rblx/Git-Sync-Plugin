@@ -83,6 +83,9 @@ plugin.Unloading:Connect(function()
 	if uiClone then
 		uiClone:Destroy()
 	end
+	if settingsuiClone then
+		settingsuiClone:Destroy()
+	end
 end)
 
 
@@ -136,42 +139,50 @@ settingsuiClone.Frame.Close.MouseButton1Click:Connect(function()
 end)
 
 pushButton.MouseButton1Click:Connect(function()
+
+
 	if not(waiting) then
 		waiting = true
-		pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(88, 166, 255)
-		local repo = textbox.Text
-		local token = tokenBox.Text
-		if repo ~= "" and token ~= "" then
-			plugin:SetSetting("REPO", repo)
-			plugin:SetSetting("TOKEN", token)
 
-			Interactions.pushToGitHub(repo, token, pushButton)
-			Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, "", plugin)
+		local verify = Functions.confirm(plugin, "push")
 
-			local existing = Interactions.listBranches(repo, token)
-			for _, branch in pairs(existing) do
-				local temp =  settingBTN_template:Clone()
-				temp.Text = branch.name
-				temp.Parent = settingsuiClone.Frame.ScrollingFrame
+		if verify then
+			pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(88, 166, 255)
+			local repo = textbox.Text
+			local token = tokenBox.Text
+			if repo ~= "" and token ~= "" then
+				plugin:SetSetting("REPO", repo)
+				plugin:SetSetting("TOKEN", token)
 
-				temp.MouseButton1Click:Connect(function()
-					settingsuiClone.Frame.branchBOX.Text = branch.name
-					plugin:SetSetting("BRANCH", settingsuiClone.Frame.branchBOX.Text)
-					Settings.SetBranch(plugin:GetSetting("BRANCH"))
-				end)
+				Interactions.pushToGitHub(repo, token, pushButton)
+				Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, "", plugin)
 
-				temp.Visible = true
+				local existing = Interactions.listBranches(repo, token)
+				for _, branch in pairs(existing) do
+					local temp =  settingBTN_template:Clone()
+					temp.Text = branch.name
+					temp.Parent = settingsuiClone.Frame.ScrollingFrame
+
+					temp.MouseButton1Click:Connect(function()
+						settingsuiClone.Frame.branchBOX.Text = branch.name
+						plugin:SetSetting("BRANCH", settingsuiClone.Frame.branchBOX.Text)
+						Settings.SetBranch(plugin:GetSetting("BRANCH"))
+					end)
+
+					temp.Visible = true
+				end
+
+			else
+				warn("Enter both the repository name and token")
+				pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(248, 81, 73)
 			end
-			
-		else
-			warn("Enter both the repository name and token")
-			pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(248, 81, 73)
+
+			task.wait(waitTime)
+
+			pushButton.ImageLabel.Image = ui.push.Value
+			pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
 		end
 
-		task.wait(waitTime)
-		
-		pushButton.ImageLabel.Image = ui.push.Value
-		pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
 		waiting = false
 	end
 end)
@@ -179,43 +190,48 @@ end)
 pullButton.MouseButton1Click:Connect(function()
 	if not(waiting) then
 		waiting = true
-		pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(88, 166, 255)
-		local repo = textbox.Text
-		local token = tokenBox.Text
 
-		if repo ~= "" and token ~= "" then
-			plugin:SetSetting("REPO", repo)
-			plugin:SetSetting("TOKEN", token)
+		local verify = Functions.confirm(plugin, "pull")
 
-			Interactions.pullFromGitHub(repo, token, pullButton)
-			
-			Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, "", plugin)
+		if verify then
+			pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(88, 166, 255)
+			local repo = textbox.Text
+			local token = tokenBox.Text
 
-			local existing = Interactions.listBranches(repo, token)
-			for _, branch in pairs(existing) do
-				local temp =  settingBTN_template:Clone()
-				temp.Text = branch.name
-				temp.Parent = settingsuiClone.Frame.ScrollingFrame
+			if repo ~= "" and token ~= "" then
+				plugin:SetSetting("REPO", repo)
+				plugin:SetSetting("TOKEN", token)
 
-				temp.MouseButton1Click:Connect(function()
-					settingsuiClone.Frame.branchBOX.Text = branch.name
-					plugin:SetSetting("BRANCH", settingsuiClone.Frame.branchBOX.Text)
-					Settings.SetBranch(plugin:GetSetting("BRANCH"))
-				end)
+				Interactions.pullFromGitHub(repo, token, pullButton)
 
-				temp.Visible = true
+				Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, "", plugin)
+
+				local existing = Interactions.listBranches(repo, token)
+				for _, branch in pairs(existing) do
+					local temp =  settingBTN_template:Clone()
+					temp.Text = branch.name
+					temp.Parent = settingsuiClone.Frame.ScrollingFrame
+
+					temp.MouseButton1Click:Connect(function()
+						settingsuiClone.Frame.branchBOX.Text = branch.name
+						plugin:SetSetting("BRANCH", settingsuiClone.Frame.branchBOX.Text)
+						Settings.SetBranch(plugin:GetSetting("BRANCH"))
+					end)
+
+					temp.Visible = true
+				end
+
+			else
+				warn("Enter both the repository name and token")
+				pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(248, 81, 73)
 			end
-			
-		else
-			warn("Enter both the repository name and token")
-			pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(248, 81, 73)
-		end
 
-		task.wait(waitTime)
-		
-		
-		pullButton.ImageLabel.Image = ui.pull.Value
-		pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+			task.wait(waitTime)
+
+
+			pullButton.ImageLabel.Image = ui.pull.Value
+			pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(255, 255, 255)
+		end
 		waiting = false
 	end
 end)
@@ -246,40 +262,40 @@ branchBox.FocusLost:Connect(function(enter, reason)
 	plugin:SetSetting("BRANCH", settingsuiClone.Frame.branchBOX.Text)
 
 	local existing = Interactions.listBranches(repo, token)
-	
-	
+
+
 	if table.find(existing, branchName) then
 		Settings.SetBranch(plugin:GetSetting("BRANCH"))
 	else
 		local sha = Interactions.getLatestCommitSHA(repo, "main", token)
 		local success = Interactions.createBranch(repo, branchName, sha, token)
-		
+
 		if success then
 			Settings.SetBranch(plugin:GetSetting("BRANCH"))
 		else
 			Settings.ResetBranch()
 		end
 	end
-	
+
 	existing = Interactions.listBranches(repo, token)
-	
+
 	for _, item in pairs(settingsuiClone.Frame.ScrollingFrame:GetChildren()) do
-	if item:IsA("TextButton") and item ~= settingBTN_template then
+		if item:IsA("TextButton") and item ~= settingBTN_template then
 			item:Destroy()
 		end
 	end
-	
+
 	for _, branch in pairs(existing) do
 		local temp =  settingBTN_template:Clone()
 		temp.Text = branch.name
 		temp.Parent = settingsuiClone.Frame.ScrollingFrame
-		
+
 		temp.MouseButton1Click:Connect(function()
 			settingsuiClone.Frame.branchBOX.Text = branch.name
 			plugin:SetSetting("BRANCH", settingsuiClone.Frame.branchBOX.Text)
 			Settings.SetBranch(plugin:GetSetting("BRANCH"))
 		end)
-		
+
 		temp.Visible = true
 	end
 end)
