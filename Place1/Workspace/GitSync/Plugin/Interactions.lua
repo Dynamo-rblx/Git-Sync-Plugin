@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
@@ -10,6 +11,7 @@ local Interactions = {}
 local Functions = require(script.Parent.Functions)
 
 local Settings = require(script.Parent.Settings)
+
 
 
 
@@ -62,8 +64,10 @@ function Interactions.pushToGitHub(repo, token, pushButton)
 		end)
 
 		if success then
-			print("Pushed: " .. filePath)
-			print("Response: ", response) -- Debugging response
+			if Settings.GetOutputEnabled() then
+				print("Pushed: " .. filePath)
+				print("Response: ", response) -- Debugging response
+			end
 			pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(63, 185, 80)
 		else
 			warn("Failed to push: " .. filePath)
@@ -258,7 +262,9 @@ function Interactions.deleteFile(owner, repo, filePath, sha, token) -- UNUSED at
 	end)
 
 	if success then
+		if Settings.GetOutputEnabled() then
 		print("Successfully deleted " .. filePath)
+		end
 		return true
 	else
 		warn("Failed to delete file: " .. response)
@@ -281,7 +287,9 @@ function Interactions.listBranches(repo, token)
 	if success then
 		local branches = game:GetService("HttpService"):JSONDecode(response)
 		for _, branch in ipairs(branches) do
+			if Settings.GetOutputEnabled() then
 			print("Branch: " .. branch.name)
+			end
 		end
 		return branches
 	else
@@ -344,7 +352,9 @@ function Interactions.createBranch(repo, branchName, baseSha, token)
 	end)
 
 	if success then
+		if Settings.GetOutputEnabled() then
 		print("Successfully created branch: " .. branchName)
+		end
 		return true
 	else
 		warn("Failed to create branch: " .. response)
