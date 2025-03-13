@@ -1,10 +1,13 @@
 -- @ScriptType: Script
+-- @ScriptType: Script
 local toolbar = plugin:CreateToolbar("GitHub Sync")
 local button = toolbar:CreateButton("Push/Pull/Update", "Push, Pull, and Update Selected Scripts to and from GitHub", "rbxassetid://120039353796013", "Toggle")
 local settingsBTN = toolbar:CreateButton("Settings", "Configure GitSync Settings", "rbxassetid://140418971118966", "Settings")
 local erepo = plugin:GetSetting("REPO") or ""
 local key = plugin:GetSetting("TOKEN") or ""
 local branch = plugin:GetSetting("BRANCH") or "main"
+
+local outputEnabled = plugin:GetSetting("OUTPUT") or false
 
 local isOpenUI = false
 local isOpenSettings = false
@@ -17,6 +20,10 @@ local Functions = require(script.Functions)
 local Style = require(script.Style)
 local Settings = require(script.Settings)
 Style.Init(plugin)
+
+-- Setup Settings
+Settings.SetOutputEnabled(outputEnabled)
+Settings.Branch = branch
 
 -- HEY HEY HEY THIS WSNT HERE BEFORE!
 --[[
@@ -300,6 +307,9 @@ branchBox.FocusLost:Connect(function(enter, reason)
 	end
 end)
 
+settingsuiClone.Frame.PrintToggle.MouseButton1Click:Connect(function()
+	Settings.ToggleOutputEnabled()
+end)
 
 while task.wait(.05) do	
 	explorer_widget.Title = "Git Explorer - "..Settings.Branch
@@ -310,7 +320,15 @@ while task.wait(.05) do
 			v:Destroy()
 		end
 	end
-
+	
+	if Settings.GetOutputEnabled() then
+		settingsuiClone.Frame.PrintToggle.TextColor3 = Color3.fromRGB(63, 185, 80)
+		settingsuiClone.Frame.PrintToggle.Text = "Printing All Output"
+	else
+		settingsuiClone.Frame.PrintToggle.TextColor3 = Color3.fromRGB(248, 81, 73)
+		settingsuiClone.Frame.PrintToggle.Text = "Printing Only Errors"
+	end
+	
 	for name, data in pairs(scripts) do
 		local scr = frame.ScrollingFrame
 
