@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local Settings = require(script.Parent.Settings)
@@ -255,7 +256,10 @@ end
 function Functions.createStructure(parent, contents, repo, token, pullButton)
 	for _, item in pairs(contents) do
 		if item.type == "dir" then
-			print("dir")
+			if Settings.GetOutputEnabled() then
+				print("dir")
+			end
+
 			local folder = Instance.new("Folder")
 			folder.Name = item.name
 			folder.Parent = parent
@@ -280,8 +284,10 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 				scriptInstance.Source = sourceCode
 				scriptInstance.Parent = parent
 				
-				print("Created new script: " .. scriptInstance.Name .. " (" .. scriptType .. ")")
-				pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(63, 185, 80)
+				if Settings.GetOutputEnabled() then
+					print("Created new script: " .. scriptInstance.Name .. " (" .. scriptType .. ")")
+				end
+					pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(63, 185, 80)
 			end
 		end
 	end
@@ -340,7 +346,9 @@ end
 		end)
 
 		if success then
-			print("Successfully created folder: " .. folderPath)
+			if Settings.GetOutputEnabled() then
+				print("Successfully created folder: " .. folderPath)
+			end
 		else
 			warn("Failed to create folder: " .. response)
 		end
@@ -360,7 +368,9 @@ end
 			end
 			parent = existingFolder
 		end
+	if Settings.GetOutputEnabled() then
 		print("Created folder path: " .. path)
+	end
 		return parent
 	end
 
