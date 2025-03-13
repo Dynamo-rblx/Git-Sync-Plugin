@@ -1,7 +1,9 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 -- Basically useless rn
 local Settings = {}
 
+Settings.outputEnabled = false
 Settings.Branch = "main"
 --Settings.Paused = false
 
@@ -31,6 +33,20 @@ end
 --function Settings.IsPaused()
 --	return Settings.Paused
 --end
+
+function Settings.ToggleOutputEnabled(): boolean
+	Settings.outputEnabled = not(Settings.outputEnabled)
+	return Settings.outputEnabled
+end
+
+function Settings.SetOutputEnabled(bool: boolean): boolean
+	Settings.outputEnabled = bool
+	return Settings.outputEnabled
+end
+
+function Settings.GetOutputEnabled(): boolean
+	return Settings.outputEnabled
+end
 
 function Settings.ResetBranch()
 	Settings.Branch = "main"
