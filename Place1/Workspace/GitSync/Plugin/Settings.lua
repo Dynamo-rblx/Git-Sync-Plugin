@@ -1,6 +1,8 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
 -- Basically useless rn
+-- Kind of replaced with plugin.GetSettings
+-- Need to fully replace w/ plugin.GetSettings for efficiency
+
 local Settings = {}
 
 Settings.outputEnabled = false
@@ -11,14 +13,14 @@ Settings.PushFrom = {
 	["Options"] = {"Selected","Exisiting", "All"} :: table<string>,
 	["Default"] = 1 :: number,
 	["Current"] = 1 :: number,
-	["Max"] = 3 ::number
+	["Max"] = 3 :: number
 }
 
 Settings.PullTo = {
 	["Options"] = {"Selected","Exisiting", "All"} :: table<string>,
 	["Default"] = 1 :: number,
 	["Current"] = 1 :: number,
-	["Max"] = 3 ::number
+	["Max"] = 3 :: number
 }
 
 function Settings.SetBranch(newbranch: string)

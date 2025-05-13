@@ -1,5 +1,4 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local Settings = require(script.Parent.Settings)
@@ -10,8 +9,6 @@ local entries = 0
 --- BEGIN CODE ---
 
 local Functions = {}
-
-
 
 function Functions.confirm(pluginVar, attempt:string): boolean
 	local plugin = pluginVar
@@ -87,8 +84,7 @@ function Functions.getRepoContents(repo, token, path, pullButton)
 		["Authorization"] = "token " .. token,
 		["Accept"] = "application/vnd.github.v3+json"
 	}
-	
-	--print("ppullinh")
+
 	local success, response = pcall(function()
 		return HttpService:RequestAsync({
 			Url = url,
@@ -97,12 +93,7 @@ function Functions.getRepoContents(repo, token, path, pullButton)
 		})
 	end)
 	
-	--print(success)
-	--print(response.Body)
-	--print(HttpService:JSONDecode(response.Body))
-	
 	if success then
-		--print("returnign")
 		return HttpService:JSONDecode(response.Body)
 	else
 		warn("Failed to fetch repository contents.")
@@ -123,22 +114,16 @@ function Functions.createEntry(name, parentFrame:Frame, isFolder, entered)
 	entry.LayoutOrder = entries
 
 	if isFolder then
-		entry.template.Text = "<b>"..entry.template.Text.."</b>"
+		entry.template.Text = "<b>"..name.."</b>"
 		entry.template.TextColor3 = Color3.fromRGB(88, 166, 255)
 	end
 
 	entry.LayoutOrder = entries
-
-	entry.MouseButton1Click:Connect(function()
-
-	end)
-
 	entry.Visible = true
 	entry.Parent = parentFrame
-
 	entry.ZIndex = parentFrame.ZIndex + 1
-
 	entries += 2
+
 	return entry
 end
 
@@ -205,9 +190,7 @@ function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugi
 				explorer_frame.Size = UDim2.fromScale(1,1)
 				explorer_frame.Visible = true
 				explorer_widget.Enabled = true
-				-- Recursive
 				Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, item.path, plugin)
-
 			end)
 
 		else
@@ -228,8 +211,7 @@ function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugi
 				text.Position = UDim2.fromScale(0,0)
 				text.RichText = true
 				text.BackgroundTransparency = 0
-				text.Text = Functions.from_base64(HttpService:JSONDecode((HttpService:GetAsync(item.url, true, {["Authorization"] = "token " .. token,["Accept"] = "application/vnd.github.v3+json"
-				}))).content)
+				text.Text = Functions.from_base64(HttpService:JSONDecode((HttpService:GetAsync(item.url, true, {["Authorization"] = "token " .. token,["Accept"] = "application/vnd.github.v3+json"}))).content)
 				text.Parent = explorer_frame.ScrollingFrame
 				text.TextColor3 = Color3.fromRGB(255,255, 255)
 				text.TextScaled = true
@@ -242,7 +224,6 @@ function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugi
 
 				explorer_frame.Visible = true
 				explorer_widget.Enabled = true
-				-- Recursive
 				Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, item.path, plugin)
 			end)
 		end
@@ -404,11 +385,9 @@ end
 		for _, obj in ipairs(selected) do
 			if obj:IsA("Script") or obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
 				scriptsSeen[obj.Name] = {["Source"] = obj.Source, ["Class"] = obj.ClassName, ["Object"] = obj}
-
 			end
 
 			if #obj:GetChildren() > 0 then
-
 				Functions.scanFolder(obj, obj.Name .. "/")
 			end
 		end
