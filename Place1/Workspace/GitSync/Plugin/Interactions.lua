@@ -11,12 +11,6 @@ local Functions = require(script.Parent.Functions)
 
 -- local Settings = require(script.Parent.Settings)
 
-
-
-
-
-
-
 function Interactions.pushToGitHub(repo, token, pushButton)
 	local scripts = Functions.getSelectedScripts()
 	local url = "https://api.github.com/repos/" .. repo .. "/contents/"
@@ -64,13 +58,13 @@ function Interactions.pushToGitHub(repo, token, pushButton)
 
 		if success then
 			if Settings.GetOutputEnabled() then
-				print("Pushed: " .. filePath)
+				print("Pushed: ", filePath)
 				print("Response: ", response) -- Debugging response
 			end
 			pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(63, 185, 80)
 		else
-			warn("Failed to push: " .. filePath)
-			warn(response)
+			warn("Failed to push: ", filePath)
+			warn("Response: ", response)
 			pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(248, 81, 73)
 		end
 		

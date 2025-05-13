@@ -1,5 +1,5 @@
 -- @ScriptType: ModuleScript
--- Basically useless rn
+-- Should be basically useless rn
 -- Kind of replaced with plugin.GetSettings
 -- Need to fully replace w/ plugin.GetSettings for efficiency
 
