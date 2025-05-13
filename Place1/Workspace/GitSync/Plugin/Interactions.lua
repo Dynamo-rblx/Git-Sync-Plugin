@@ -1,5 +1,4 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
@@ -10,7 +9,7 @@ local Interactions = {}
 
 local Functions = require(script.Parent.Functions)
 
-local Settings = require(script.Parent.Settings)
+-- local Settings = require(script.Parent.Settings)
 
 
 

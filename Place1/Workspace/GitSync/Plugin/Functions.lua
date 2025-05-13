@@ -1,5 +1,4 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local Settings = require(script.Parent.Settings)
@@ -10,8 +9,6 @@ local entries = 0
 --- BEGIN CODE ---
 
 local Functions = {}
-
-
 
 function Functions.confirm(pluginVar, attempt:string): boolean
 	local plugin = pluginVar
@@ -123,15 +120,14 @@ function Functions.createEntry(name, parentFrame:Frame, isFolder, entered)
 	entry.LayoutOrder = entries
 
 	if isFolder then
-		entry.template.Text = "<b>"..entry.template.Text.."</b>"
+		entry.template.Text = "<b>"..name.."</b>"
 		entry.template.TextColor3 = Color3.fromRGB(88, 166, 255)
 	end
 
 	entry.LayoutOrder = entries
 
-	entry.MouseButton1Click:Connect(function()
-
-	end)
+	-- entry.MouseButton1Click:Connect(function()
+	-- end)
 
 	entry.Visible = true
 	entry.Parent = parentFrame

@@ -1,5 +1,4 @@
 -- @ScriptType: Script
--- @ScriptType: Script
 local toolbar = plugin:CreateToolbar("GitHub Sync")
 local button = toolbar:CreateButton("Push/Pull/Update", "Push, Pull, and Update Selected Scripts to and from GitHub", "rbxassetid://120039353796013", "Toggle")
 local settingsBTN = toolbar:CreateButton("Settings", "Configure GitSync Settings", "rbxassetid://140418971118966", "Settings")
@@ -24,24 +23,6 @@ Style.Init(plugin)
 -- Setup Settings
 Settings.SetOutputEnabled(outputEnabled)
 Settings.Branch = branch
-
--- HEY HEY HEY THIS WSNT HERE BEFORE!
---[[
-NOW WE ARE TESTING.....
-PUSHING WITH PUT
-
-UPDATING WITH SHA!
-
-PULLING WITH FETCH (and stuff)
-ACCIDENTALLY PULLED OLD VERSION OVER NEW VERSION LUCKILY THERE ARE BACKUPS
-]]
-
-
---local widgetInfo = DockWidgetPluginGuiInfo.new(
---	Enum.InitialDockState.Float, true, false, 300, 400, 394, 337
---)
-
---local widget = plugin:CreateDockWidgetPluginGui("GitHubSync", widgetInfo)
 
 local CoreGui = game:GetService("CoreGui")
 
@@ -110,18 +91,6 @@ local loadRepoButton = frame.ViewRepoBTN
 local HttpService = game:GetService("HttpService")
 
 local settingBTN_template = settingsuiClone.Frame.ScrollingFrame.template
-
-
-
-
-
---uiClone.Frame.Frame.dragger.MouseButton1Down:Connect(function(x,y)
---	repeat
---	local lastpos = UDim2.fromOffset(plugin:GetMouse().X, plugin:GetMouse().Y + 27)
---	frame.Position = lastpos
---	task.wait()
---	until uiClone.Frame.Frame.dragger.MouseButton1Up
---end)
 
 
 local textbox = frame.repoBOX
@@ -330,9 +299,9 @@ while task.wait(.05) do
 	end
 	
 	for name, data in pairs(scripts) do
-		local scr = frame.ScrollingFrame
+		local scr_frm = frame.ScrollingFrame
 
-		if not(scr:FindFirstChild(name)) then
+		if not(scr_frm:FindFirstChild(name)) then
 			temp = t:Clone()
 			temp.Name = name
 			temp.Text = name
