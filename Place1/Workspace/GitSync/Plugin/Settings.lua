@@ -59,6 +59,23 @@ function Settings.Init()
 	Settings.PushFrom.Current = Settings.PushFrom.Default
 	--Settings.Paused = false
 	Settings.Branch = "main"
+
+	Settings.outputEnabled = false
+	--Settings.Paused = false
+
+	Settings.PushFrom = {
+		["Options"] = {"Selected","Exisiting", "All"} :: table<string>,
+		["Default"] = 1 :: number,
+		["Current"] = 1 :: number,
+		["Max"] = 3 :: number
+	}
+
+	Settings.PullTo = {
+		["Options"] = {"Selected","Exisiting", "All"} :: table<string>,
+		["Default"] = 1 :: number,
+		["Current"] = 1 :: number,
+		["Max"] = 3 :: number
+	}
 	return Settings
 end
 

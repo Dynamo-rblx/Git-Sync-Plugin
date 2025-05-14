@@ -4,7 +4,10 @@ local button = toolbar:CreateButton("Push/Pull/Update", "Push, Pull, and Update 
 local settingsBTN = toolbar:CreateButton("Settings", "Configure GitSync Settings", "rbxassetid://140418971118966", "Settings")
 local erepo = plugin:GetSetting("REPO") or ""
 local key = plugin:GetSetting("TOKEN") or ""
+
+-- SETTINGS
 local branch = plugin:GetSetting("BRANCH") or "main"
+
 
 local outputEnabled = plugin:GetSetting("OUTPUT") or false
 
