@@ -7,6 +7,7 @@ local Selection = game:GetService("Selection")
 local selectedScripts = {}
 local entries = 0
 local Functions = {}
+local scriptsSeen = {}
 ---------------------------------------------------
 
 -- INITIALIZATION
@@ -17,7 +18,7 @@ function Functions.Init(pluginVar)
 end
 ---------------------------------------------------
 
--- FUNCTION DEFINITIONS
+-- FUNCTION DECLARATIONS
 
 ----> Clip metadata (@ScriptType: ...) from script source
 function Functions.clipMetadata(source: string | Script | ModuleScript | LocalScript)
@@ -239,7 +240,7 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 	return
 end
 
-----> Retrieves latest commit data of specified path
+----> Retrieves latest commit data of specified file path
 function Functions.getFileSHA(repo, token, filePath)
 	local HttpService = game:GetService("HttpService")
 	local url = "https://api.github.com/repos/" .. repo .. "/contents/" .. filePath
@@ -265,71 +266,11 @@ function Functions.getFileSHA(repo, token, filePath)
 	end
 end
 
-
-
-
-
-function Functions.createFolder(repo, folderPath, token)
-	local url = "https://api.github.com/repos/" .. repo .. "/contents/" .. folderPath .. "/.gitkeep"
-
-	local requestBody = HttpService:JSONEncode({
-		message = "Created folder: " .. folderPath,
-		content = Functions.to_base64("Placeholder file to keep folder"),
-		branch = plugin:GetSetting("BRANCH")
-	})
-
-	local headers = {
-		["Authorization"] = "token " .. token,
-		["Accept"] = "application/vnd.github.v3+json"
-	}
-
-	local success, response = pcall(function()
-		return HttpService:RequestAsync({
-			Url = url,
-			Method = "PUT",
-			Headers = headers,
-			Body = requestBody
-		})
-	end)
-
-	if response.Success then
-		if plugin:GetSetting("OUTPUT_ENABLED") then
-			print("Successfully created folder: " .. folderPath)
-		end
-	else
-		warn("Failed to create folder: " .. response.Body)
-	end
-end
-
-
-
-
-function Functions.ensureFolderExists(path, parent)
-	local folderNames = string.split(path, "/")
-	for _, folderName in ipairs(folderNames) do
-		local existingFolder = parent:FindFirstChild(folderName)
-		if not existingFolder then
-			existingFolder = Instance.new("Folder")
-			existingFolder.Name = folderName
-			existingFolder.Parent = parent
-		end
-		parent = existingFolder
-	end
-	if plugin:GetSetting("OUTPUT_ENABLED") then
-		print("Created folder at " .. path)
-	end
-	return parent
-end
-
-
-
-
-local scriptsSeen = {}
+----> Recursive search a directory and document scripts found
 function Functions.scanFolder(folder, path)
 	for _, obj in ipairs(folder:GetChildren()) do
 		if obj:IsA("Script") or obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
 			scriptsSeen[obj.Name] = {["Source"] = obj.Source, ["Class"] = obj.ClassName, ["Object"] = obj}
-
 		end
 
 		if #obj:GetChildren() > 0 then
@@ -340,10 +281,7 @@ function Functions.scanFolder(folder, path)
 	return true
 end
 
-
-
-
-
+----> Get scripts selected by developer and recursively search folders that are descendants of the selected instances
 function Functions.getSelectedScripts()
 	local selected = Selection:Get()
 	scriptsSeen = {}
@@ -361,10 +299,7 @@ function Functions.getSelectedScripts()
 	return scriptsSeen
 end
 
-
-
-
-
+----> Convert data from base 10 to base 64
 function Functions.to_base64(data) -- (XDeltaXen) - https://devforum.roblox.com/t/base64-encoding-and-decoding-in-lua/1719860
 	local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 	return ((data:gsub('.', function(x) 
@@ -379,10 +314,7 @@ function Functions.to_base64(data) -- (XDeltaXen) - https://devforum.roblox.com/
 	end)..({ '', '==', '=' })[#data%3+1])
 end
 
-
-
-
-
+----> Convert data from base 64 to base 10
 function Functions.from_base64(data) -- (XDeltaXen) - https://devforum.roblox.com/t/base64-encoding-and-decoding-in-lua/1719860
 	local b = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 	data = string.gsub(data, '[^'..b..'=]', '')
