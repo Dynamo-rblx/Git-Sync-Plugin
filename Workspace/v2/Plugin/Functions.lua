@@ -1,20 +1,25 @@
 -- @ScriptType: ModuleScript
+---------------------------------------------------
+-- VARIABLES
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 
 local selectedScripts = {}
 local entries = 0
 local Functions = {}
+---------------------------------------------------
 
---- INITIALIZATION ---
+-- INITIALIZATION
 local plugin
 
 function Functions.Init(pluginVar)
 	plugin = pluginVar
 end
+---------------------------------------------------
 
---- BEGIN CODE ---
+-- FUNCTION DEFINITIONS
 
+----> Clip metadata (@ScriptType: ...) from script source
 function Functions.clipMetadata(source: string | Script | ModuleScript | LocalScript)
 	if not(type(source) == "string") then source = source.Source end
 	
@@ -32,6 +37,7 @@ function Functions.clipMetadata(source: string | Script | ModuleScript | LocalSc
 	end
 end
 
+----> Confirmation pop-up
 function Functions.confirm(attempt: string): boolean
 	local widgetInfo = DockWidgetPluginGuiInfo.new(
 		Enum.InitialDockState.Float, true, false, 300, 200, 353,194
@@ -73,10 +79,7 @@ function Functions.confirm(attempt: string): boolean
 	return not(confirmed == 0)
 end
 
-
-
-
-
+----> Get path of script instance (up to Services)
 function Functions.getScriptPath(scriptFile)
 	local path = scriptFile.Name .. ".lua"
 	local parent = scriptFile.Parent
@@ -89,10 +92,7 @@ function Functions.getScriptPath(scriptFile)
 	return path
 end
 
-
-
-
-
+----> Return the contents of a repository
 function Functions.getRepoContents(repo, token, path, pullButton)
 	local url = "https://api.github.com/repos/" .. repo .. "/contents/" .. (path or "") .."?ref="..plugin:GetSetting("BRANCH")
 	local headers = {
@@ -117,11 +117,8 @@ function Functions.getRepoContents(repo, token, path, pullButton)
 	end
 end
 
-
-
-
-
-function Functions.createEntry(name, parentFrame:Frame, isFolder, entered)
+----> Create & return a rectangular button in repository viewer
+function Functions.createEntry(name: string, parentFrame: Frame, isFolder: bool)
 	local entry = script.templatefileindicator:Clone()
 
 	entry.template.Text = name
@@ -142,48 +139,7 @@ function Functions.createEntry(name, parentFrame:Frame, isFolder, entered)
 	return entry
 end
 
-
-
-
-
-function Functions.getProperties(instance)
-	local properties = {}
-	local success, propertiesList = pcall(function()
-		return instance:GetAttributes()
-	end)
-
-	if success then
-		for name, value in pairs(propertiesList) do
-			properties[name] = value
-		end
-	end
-
-	local success2, classInfo = pcall(function()
-		return Instance.new(instance.ClassName)
-	end)
-
-	if success2 then
-		for _, property in ipairs(classInfo:GetProperties()) do
-			local propName = property.Name
-			local success3, propValue = pcall(function()
-				return instance[propName]
-			end)
-			if success3 then
-				properties[propName] = propValue
-			end
-		end
-	end
-
-	return properties
-end
-
-
-
-
-
-
-
-
+----> Populate explorer window (repository viewer) with entries
 function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugin)
 	local contents = Functions.getRepoContents(repo, token, path)
 
@@ -245,10 +201,7 @@ function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugi
 	end
 end
 
-
-
-
-
+----> Generate a folder instance structure (directory) in parent by recursively searching repository directory
 function Functions.createStructure(parent, contents, repo, token, pullButton)
 	for _, item in pairs(contents) do
 		if item.type == "dir" then
@@ -257,16 +210,12 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 			end
 
 			local folder = Instance.new("Folder")
-			folder.Name = item.name
-			folder.Parent = parent
+			folder.Name, folder.Parent = item.name, parent
 
 			local subContents = Functions.getRepoContents(repo, token, item.path)
-			if subContents then
+			if subContents then Functions.createStructure(folder, subContents, repo, token, pullButton) end
 
-				Functions.createStructure(folder, subContents, repo, token, pullButton)
-			end
-
-		elseif item.type == "file" and item.name:match("%.lua$") then
+		elseif item.type == "file" and (item.name:match("%.lua$") or item.name:match("%.luau$")) then
 
 			local fileData = Functions.getRepoContents(repo, token, item.path)
 			if fileData and fileData.content then
@@ -274,9 +223,7 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 
 				local firstLine = sourceCode:match("^(.-)\n")
 				local scriptType = firstLine:match("%-%- @ScriptType: (.+)") or "Script"
-
 				local scriptInstance = Instance.new(scriptType)
-				
 				scriptInstance.Name = item.name:gsub("%.lua$", "")
 				scriptInstance.Name = scriptInstance.Name:gsub("%.luau$", "")
 				scriptInstance.Source = Functions.clipMetadata(sourceCode)
@@ -292,9 +239,7 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 	return
 end
 
-
-
-
+----> Retrieves latest commit data of specified path
 function Functions.getFileSHA(repo, token, filePath)
 	local HttpService = game:GetService("HttpService")
 	local url = "https://api.github.com/repos/" .. repo .. "/contents/" .. filePath
