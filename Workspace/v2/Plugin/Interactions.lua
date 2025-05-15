@@ -103,8 +103,8 @@ function Interactions.pullFromGitHub(repo, token, pullButton)
 	return
 end
 
-----> Delete 
-function Interactions.deleteFile(repo, filePath, sha, token) -- UNUSED at the moment
+----> Delete file
+function Interactions.deleteFile(repo, filePath, sha, token)
 	local HttpService = game:GetService("HttpService")
 	local url = "https://api.github.com/repos/".. repo .. "/contents/" .. filePath
 
