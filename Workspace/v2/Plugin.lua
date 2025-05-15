@@ -26,27 +26,12 @@
 task.wait(1.5) ------------------------------------]
 ---------------------------------------------------]
 
--- VARIABLES
+-- GLOBALS
 local toolbar = plugin:CreateToolbar("GitSync Testing 2")
 local mainBTN = toolbar:CreateButton("Push/Pull/Update", "Push, Pull, and Update Selected Scripts to and from GitHub", "rbxassetid://10734930886", "Toggle")
 local settingsBTN = toolbar:CreateButton("Settings", "Configure GitSync Settings", "rbxassetid://10734930886", "Settings")
-local repo = plugin:GetSetting("REPOSITORY") or ""
-plugin:SetSetting("REPOSITORY", repo)
 
-local token = plugin:GetSetting("TOKEN") or ""
-plugin:SetSetting("TOKEN", token)
-
-local CoreGui = game:GetService("CoreGui")
----------------------------------------------------
-
--- SETTINGS
-local branch = plugin:GetSetting("BRANCH") or "main"
-plugin:SetSetting("BRANCH", branch)
-
-local outputEnabled = plugin:GetSetting("OUTPUT_ENABLED") or true
-plugin:SetSetting("OUTPUT_ENABLED", outputEnabled)
-
-local isOpenUI = false
+local isOpenMain = false
 local isOpenSettings = false
 
 local waiting = false
@@ -55,6 +40,25 @@ local waitTime = 1
 local Interactions = require(script.Interactions)
 local Functions = require(script.Functions)
 local Style = require(script.Style)
+
+local CoreGui = game:GetService("CoreGui")
+---------------------------------------------------
+
+-- SETTINGS
+local repo = plugin:GetSetting("REPOSITORY") or ""
+plugin:SetSetting("REPOSITORY", repo)
+
+local token = plugin:GetSetting("TOKEN") or ""
+plugin:SetSetting("TOKEN", token)
+
+local branch = plugin:GetSetting("BRANCH") or "main"
+plugin:SetSetting("BRANCH", branch)
+
+local outputEnabled = plugin:GetSetting("OUTPUT_ENABLED") or true
+plugin:SetSetting("OUTPUT_ENABLED", outputEnabled)
+
+local pull_target = plugin:GetSetting("PULL_TARGET") or workspace
+plugin:SetSetting("PULL_TARGET", pull_target)
 ---------------------------------------------------
 
 -- INITIALIZATION
@@ -79,16 +83,12 @@ explorer_frame.Parent = explorer_widget
 explorer_frame.Size = UDim2.fromScale(1,1)
 
 ----> Put temporary plugin UI templates in CoreUI
-local uiClone = ui:Clone()
-uiClone.Parent = CoreGui
-uiClone.Enabled = false
-
-local settingsuiClone = settingsui:Clone()
-settingsuiClone.Parent = CoreGui
-settingsuiClone.Enabled = false
+local uiClone, settingsuiClone = ui:Clone(), settingsui:Clone()
+uiClone.Parent = CoreGui; settingsuiClone.Parent = CoreGui
+uiClone.Enabled = false; settingsuiClone.Enabled = false
 
 ----> Connect functions to remote UI
-mainBTN.Click:Connect(function() isOpenUI = not(isOpenUI); uiClone.Enabled = isOpenUI; end)
+mainBTN.Click:Connect(function() isOpenMain = not(isOpenMain); uiClone.Enabled = isOpenMain; end)
 settingsBTN.Click:Connect(function() isOpenSettings = not(isOpenSettings); settingsuiClone.Enabled = isOpenSettings; end)
 
 ----> Connect function for unloading behavior
@@ -110,7 +110,8 @@ repoBox.Text, tokenBox.Text, branchBox.Text = repo, token, branch
 ----> Make UI frames draggable
 Style.makeDraggable(frame); Style.makeDraggable(settingsuiClone.Frame);
 
-frame.Close.MouseButton1Click:Connect(function() isOpenUI = not(isOpenUI); uiClone.Enabled = isOpenUI; end)
+----> Set up close-window functionality
+frame.Close.MouseButton1Click:Connect(function() isOpenMain = not(isOpenMain); uiClone.Enabled = isOpenUI; end)
 settingsuiClone.Frame.Close.MouseButton1Click:Connect(function() isOpenSettings = not(isOpenSettings); settingsuiClone.Enabled = isOpenSettings; end)
 
 ----> Make push system functional
@@ -270,7 +271,7 @@ settingsuiClone.Frame.PrintToggle.MouseButton1Click:Connect(function()
 	plugin:SetSetting("OUTPUT_ENABLED", not(plugin:GetSetting("OUTPUT_ENABLED")))
 end)
 ---------------------------------------------------
--- PERIODIC (RUNTIME) CODE
+-- RUNTIME CODE
 
 while task.wait(.05) do	----> 20 cycles per second
 	----> Update repository explorer window title

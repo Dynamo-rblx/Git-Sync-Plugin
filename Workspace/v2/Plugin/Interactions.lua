@@ -1,19 +1,24 @@
 -- @ScriptType: ModuleScript
+---------------------------------------------------
+-- GLOBALS
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local Functions = require(script.Parent.Functions)
 local Interactions = {}
+---------------------------------------------------
 
---- INITIALIZATION ---
+-- INITIALIZATION
 local plugin
 
 function Interactions.Init(pluginVar)
 	plugin = pluginVar
 end
+---------------------------------------------------
 
---- BEGIN CODE ---
+-- FUNCTION DECLARATIONS
 
+----> Push selected scripts to specified repository & branch
 function Interactions.pushToGitHub(repo, token, pushButton)
 	local scripts = Functions.getSelectedScripts()
 	local url = "https://api.github.com/repos/" .. repo .. "/contents/"
@@ -74,15 +79,7 @@ function Interactions.pushToGitHub(repo, token, pushButton)
 	end
 end
 
-
-
-
-
-
-
-
-
-
+----> Pull entire repository from GitHub and import it to Studio
 function Interactions.pullFromGitHub(repo, token, pullButton)
 
 	ChangeHistoryService:SetWaypoint("Before GitHub Pull")	
@@ -92,7 +89,7 @@ function Interactions.pullFromGitHub(repo, token, pullButton)
 		local rootFolder = Instance.new("Folder")
 		local directory = string.split(repo, "/")
 		rootFolder.Name = directory[2]
-		rootFolder.Parent = workspace
+		rootFolder.Parent = plugin:GetSetting("PULL_TARGET")
 
 		Functions.createStructure(rootFolder, 
 			contents, 

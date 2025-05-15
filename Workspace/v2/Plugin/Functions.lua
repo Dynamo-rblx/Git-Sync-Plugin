@@ -1,6 +1,6 @@
 -- @ScriptType: ModuleScript
 ---------------------------------------------------
--- VARIABLES
+-- GLOBALS
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 
@@ -19,7 +19,6 @@ end
 ---------------------------------------------------
 
 -- FUNCTION DECLARATIONS
-
 ----> Clip metadata (@ScriptType: ...) from script source
 function Functions.clipMetadata(source: string | Script | ModuleScript | LocalScript)
 	if not(type(source) == "string") then source = source.Source end
@@ -332,3 +331,4 @@ function Functions.from_base64(data) -- (XDeltaXen) - https://devforum.roblox.co
 end
 
 return Functions
+---------------------------------------------------
