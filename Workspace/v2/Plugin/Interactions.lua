@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+
 ---------------------------------------------------
 -- GLOBALS
 local HttpService = game:GetService("HttpService")
@@ -19,9 +20,9 @@ end
 -- FUNCTION DECLARATIONS
 
 ----> Push selected scripts to specified repository & branch
-function Interactions.pushToGitHub(repo, token, pushButton)
+function Interactions.pushToGitHub(pushButton)
 	local scripts = Functions.getSelectedScripts()
-	local url = "https://api.github.com/repos/" .. repo .. "/contents/"
+	local url = "https://api.github.com/repos/" .. plugin:GetSetting("REPOSITORY") .. "/contents/"
 
 	if next(scripts) == nil then
 		warn("No scripts selected!")
@@ -34,24 +35,17 @@ function Interactions.pushToGitHub(repo, token, pushButton)
 	for name, data in pairs(scripts) do
 		local filePath = Functions.getScriptPath(data.Object)
 		local fileUrl = url .. filePath
-
-
 		local scriptWithMetadata = "-- @ScriptType: " .. data.Class .. "\n" .. data.Source
-
-		local sha = Functions.getFileSHA(repo, token, filePath)
-
+		
 		local requestBody = {
 			message = "Updated " .. filePath,
 			content = Functions.to_base64(scriptWithMetadata),
-			branch = plugin:GetSetting("BRANCH")
+			branch = plugin:GetSetting("BRANCH"),
+			sha = Functions.getFileSHA(filePath) or Interactions.getLatestCommitSHA()
 		}
 
-		if sha then
-			requestBody.sha = sha
-		end
-
 		local headers = {
-			["Authorization"] = "token " .. token,
+			["Authorization"] = "token " .. plugin:GetSetting("TOKEN"),
 			["Accept"] = "application/vnd.github.v3+json"
 		}
 
@@ -80,21 +74,18 @@ function Interactions.pushToGitHub(repo, token, pushButton)
 end
 
 ----> Pull entire repository from GitHub and import it to Studio
-function Interactions.pullFromGitHub(repo, token, pullButton)
+function Interactions.pullFromGitHub(pullButton)
 
 	ChangeHistoryService:SetWaypoint("Before GitHub Pull")	
 
-	local contents = Functions.getRepoContents(repo, token, "", pullButton)
+	local contents = Functions.getRepoContents("", pullButton)
 	if contents then
-		local rootFolder = Instance.new("Folder")
-		local directory = string.split(repo, "/")
-		rootFolder.Name = directory[2]
-		rootFolder.Parent = plugin:GetSetting("PULL_TARGET")
+		--local rootFolder = Instance.new("Folder")
+		--local directory = string.split(plugin:GetSetting("REPOSITORY"), "/")
+		--rootFolder.Name = directory[2]
+		--rootFolder.Parent = workspace
 
-		Functions.createStructure(rootFolder, 
-			contents, 
-			repo, 
-			token, pullButton)
+		Functions.createStructure(workspace, contents, pullButton)
 	else
 		return
 	end
@@ -104,9 +95,9 @@ function Interactions.pullFromGitHub(repo, token, pullButton)
 end
 
 ----> Delete file
-function Interactions.deleteFile(repo, filePath, sha, token)
+function Interactions.deleteFile(filePath, sha)
 	local HttpService = game:GetService("HttpService")
-	local url = "https://api.github.com/repos/".. repo .. "/contents/" .. filePath
+	local url = "https://api.github.com/repos/".. plugin:GetSetting("REPOSITORY") .. "/contents/" .. filePath
 
 	local requestBody = HttpService:JSONEncode({
 		message = "Deleted " .. filePath,
@@ -115,7 +106,7 @@ function Interactions.deleteFile(repo, filePath, sha, token)
 	})
 
 	local headers = {
-		["Authorization"] = "token " .. token,
+		["Authorization"] = "token " .. plugin:GetSetting("TOKEN"),
 		["Accept"] = "application/vnd.github.v3+json"
 	}
 
@@ -139,13 +130,10 @@ function Interactions.deleteFile(repo, filePath, sha, token)
 	end
 end
 
-
-
-
-
-function Interactions.listBranches(repo, token)
-	local url = "https://api.github.com/repos/".. repo .. "/branches"
-	local headers = { ["Authorization"] = "token " .. token }
+----> Retrieves and returns a list of branches in the repository
+function Interactions.listBranches()
+	local url = "https://api.github.com/repos/".. plugin:GetSetting("REPOSITORY") .. "/branches"
+	local headers = { ["Authorization"] = "token " .. plugin:GetSetting("TOKEN") }
 
 	local success, response = pcall(function()
 		return HttpService:RequestAsync({
@@ -157,11 +145,7 @@ function Interactions.listBranches(repo, token)
 
 	if response.Success then
 		local branches = game:GetService("HttpService"):JSONDecode(response.Body)
-		for _, branch in ipairs(branches) do
-			if plugin:GetSetting("OUTPUT_ENABLED") then
-				print("Branch: " .. branch.name)
-			end
-		end
+		if plugin:GetSetting("OUTPUT_ENABLED") then print(branches) end
 		return branches
 	else
 		warn("Failed to list branches: " .. response.Body)
@@ -169,20 +153,17 @@ function Interactions.listBranches(repo, token)
 	end
 end
 
-
-
-
-
-function Interactions.getLatestCommitSHA(repo, branch, token)
+----> Get information (sha) about the latest commit on the specified branch
+function Interactions.getLatestCommitSHA()
 	local HttpService = game:GetService("HttpService")
-	local url = "https://api.github.com/repos/" .. repo .. "/branches/" .. branch
+	local url = "https://api.github.com/repos/" .. plugin:GetSetting("REPOSITORY") .. "/branches/" .. plugin:GetSetting("BRANCH")
 
 	local success, response = pcall(function()
 		return HttpService:RequestAsync({
 			Url = url,
 			Method = "GET",
 			Headers = {
-				["Authorization"] = "token " .. token,
+				["Authorization"] = "token " .. plugin:GetSetting("TOKEN"),
 				["Accept"] = "application/vnd.github.v3+json"
 			}
 		})
@@ -190,18 +171,13 @@ function Interactions.getLatestCommitSHA(repo, branch, token)
 
 	assert(success, "Failed to get latest commit SHA:"..response.Body)
 	local data = HttpService:JSONDecode(response.Body)
-	if data and data.commit and data.commit.sha then
-		return data.commit.sha
-	end
+	if data then return data.sha end
 end
 
-
-
-
-
-function Interactions.createBranch(repo, branchName, baseSha, token)
+----> Create a new branch based on the specified commit
+function Interactions.createBranch(branchName, baseSha)
 	local HttpService = game:GetService("HttpService")
-	local url = "https://api.github.com/repos/".. repo .. "/git/refs"
+	local url = "https://api.github.com/repos/".. plugin:GetSetting("REPOSITORY") .. "/git/refs"
 
 	local requestBody = HttpService:JSONEncode({
 		ref = "refs/heads/" .. branchName,
@@ -209,7 +185,7 @@ function Interactions.createBranch(repo, branchName, baseSha, token)
 	})
 
 	local headers = {
-		["Authorization"] = "token " .. token,
+		["Authorization"] = "token " .. plugin:GetSetting("TOKEN"),
 		["Accept"] = "application/vnd.github.v3+json"
 	}
 
