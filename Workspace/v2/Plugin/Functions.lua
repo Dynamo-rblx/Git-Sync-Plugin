@@ -1,13 +1,10 @@
 -- @ScriptType: ModuleScript
+
 ---------------------------------------------------
 -- GLOBALS
 local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
-
-local selectedScripts = {}
-local entries = 0
-local Functions = {}
-local scriptsSeen = {}
+local selectedScripts, Functions, scriptsSeen, entries = {}, {}, {}, 0
 ---------------------------------------------------
 
 -- INITIALIZATION
@@ -22,19 +19,15 @@ end
 ----> Clip metadata (@ScriptType: ...) from script source
 function Functions.clipMetadata(source: string | Script | ModuleScript | LocalScript)
 	if not(type(source) == "string") then source = source.Source end
-	
-	if string.find(source, "-- @ScriptType: ") then
-		local lines = source:split("\n")
-		local newSource = ""
 
-		for i, line in pairs(lines) do
-			if not(string.find(line, "-- @ScriptType: ")) then
-				newSource = newSource.."\n"..line
-			end
-		end
-		
-		return newSource
+	local lines = source:split("\n")
+	local newSource = ""
+
+	for i, line in pairs(lines) do
+		newSource = newSource.."\n"..line
 	end
+
+	return newSource
 end
 
 ----> Confirmation pop-up
@@ -49,11 +42,11 @@ function Functions.confirm(attempt: string): boolean
 	confirm_frame.Size = UDim2.fromScale(1,1)
 
 	local confirmed = -1 --> No input
-	
+
 	local function setTrue()
 		confirmed = 1 --> true
 	end
-	
+
 	local function setFalse()
 		confirmed = 0 --> false
 	end
@@ -75,7 +68,7 @@ function Functions.confirm(attempt: string): boolean
 	task.wait(.6)
 
 	confirm_widget:Destroy()
-	
+
 	return not(confirmed == 0)
 end
 
@@ -93,10 +86,10 @@ function Functions.getScriptPath(scriptFile)
 end
 
 ----> Return the contents of a repository
-function Functions.getRepoContents(repo, token, path, pullButton)
-	local url = "https://api.github.com/repos/" .. repo .. "/contents/" .. (path or "") .."?ref="..plugin:GetSetting("BRANCH")
+function Functions.getRepoContents(path, pullButton)
+	local url = "https://api.github.com/repos/" .. plugin:GetSetting("REPOSITORY") .. "/contents/" .. (path or "") .."?ref="..plugin:GetSetting("BRANCH")
 	local headers = {
-		["Authorization"] = "token " .. token,
+		["Authorization"] = "token " .. plugin:GetSetting("TOKEN"),
 		["Accept"] = "application/vnd.github.v3+json"
 	}
 
@@ -112,7 +105,7 @@ function Functions.getRepoContents(repo, token, path, pullButton)
 		return HttpService:JSONDecode(response.Body)
 	else
 		warn("Failed to fetch repository contents.")
-		pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(248, 81, 73)
+		if pullButton then pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(248, 81, 73) end
 		return nil
 	end
 end
@@ -140,8 +133,8 @@ function Functions.createEntry(name: string, parentFrame: Frame, isFolder: bool)
 end
 
 ----> Populate explorer window (repository viewer) with entries
-function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugin)
-	local contents = Functions.getRepoContents(repo, token, path)
+function Functions.populateExplorer(parentFrame: Frame, path)
+	local contents = Functions.getRepoContents(path)
 
 	if not contents then return end
 
@@ -161,69 +154,62 @@ function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugi
 				explorer_frame.Size = UDim2.fromScale(1,1)
 				explorer_frame.Visible = true
 				explorer_widget.Enabled = true
-				Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, item.path, plugin)
+				Functions.populateExplorer(explorer_frame.ScrollingFrame, item.path)
 			end)
 
 		else
 
 			entry.MouseButton1Click:Connect(function()		
 				local widgetInfo = DockWidgetPluginGuiInfo.new(
-					Enum.InitialDockState.Right, false, false, 300, 200, 300, 200
+					Enum.InitialDockState.Float, false, false, 300, 200, 400, 300
 				)
 				local explorer_widget = plugin:CreateDockWidgetPluginGui("GitHubSyncExplorer - "..item.name..tostring(Random.new():NextNumber(-100000*10.29432, 999999*10.29432)), widgetInfo)
-				explorer_widget.Title = "Git File Viewer - "..item.name
-				local explorer_frame = script.Parent.ExplorerWindow:Clone()
-				explorer_frame.Parent = explorer_widget
-				explorer_frame.Size = UDim2.fromScale(1,1)
-				explorer_frame.ScrollingFrame.BackgroundTransparency = 1
-				local text = Instance.new("TextBox")
-				text.ClearTextOnFocus = false
-				text.Size = UDim2.fromScale(1,1)
-				text.Position = UDim2.fromScale(0,0)
-				text.RichText = true
-				text.BackgroundTransparency = 0
-				text.Text = Functions.from_base64(HttpService:JSONDecode((HttpService:GetAsync(item.url, true, {["Authorization"] = "token " .. token,["Accept"] = "application/vnd.github.v3+json"}))).content)
-				text.Parent = explorer_frame.ScrollingFrame
-				text.TextColor3 = Color3.fromRGB(255,255, 255)
-				text.TextScaled = true
-				text.TextWrapped = true
-				local padding = Instance.new("UIPadding", text)
-				padding.PaddingRight = UDim.new(0.05,0)
-				padding.PaddingLeft = UDim.new(0.05,0)
-				padding.PaddingTop = UDim.new(0.05,0)
-				padding.PaddingBottom = UDim.new(0.05,0)
+				explorer_widget.Title = "GitSync File Explorer - "..item.name
+				local text = script.Parent.CodeViewer:Clone()
+				text.TextBox.Text = Functions.from_base64(HttpService:JSONDecode((HttpService:GetAsync(item.url, true, {["Authorization"] = "token " .. plugin:GetSetting("TOKEN"),["Accept"] = "application/vnd.github.v3+json"}))).content)
+				text.Parent = explorer_widget
 
-				explorer_frame.Visible = true
 				explorer_widget.Enabled = true
-				Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, item.path, plugin)
 			end)
 		end
 	end
 end
 
 ----> Generate a folder instance structure (directory) in parent by recursively searching repository directory
-function Functions.createStructure(parent, contents, repo, token, pullButton)
+function Functions.createStructure(parent, contents, pullButton)
 	for _, item in pairs(contents) do
+		local notService = not(game:FindFirstChild(item.name))
 		if item.type == "dir" then
 			if plugin:GetSetting("OUTPUT_ENABLED") then
-				print("dir")
+				if notService then
+					print("dir")
+				else
+					print("service")
+				end
 			end
+			
+			local folder: any
 
-			local folder = Instance.new("Folder")
-			folder.Name, folder.Parent = item.name, parent
-
-			local subContents = Functions.getRepoContents(repo, token, item.path)
-			if subContents then Functions.createStructure(folder, subContents, repo, token, pullButton) end
+			if notService then
+				folder = Instance.new("Folder")
+				folder.Name, folder.Parent = item.name, parent
+			else
+				folder = game[item.name]
+			end
+			
+			local subContents = Functions.getRepoContents(item.path)
+			if subContents then Functions.createStructure(folder, subContents, pullButton) end
 
 		elseif item.type == "file" and (item.name:match("%.lua$") or item.name:match("%.luau$")) then
 
-			local fileData = Functions.getRepoContents(repo, token, item.path)
+			local fileData = Functions.getRepoContents(item.path)
 			if fileData and fileData.content then
 				local sourceCode = Functions.from_base64(fileData.content)
 
 				local firstLine = sourceCode:match("^(.-)\n")
 				local scriptType = firstLine:match("%-%- @ScriptType: (.+)") or "Script"
 				local scriptInstance = Instance.new(scriptType)
+
 				scriptInstance.Name = item.name:gsub("%.lua$", "")
 				scriptInstance.Name = scriptInstance.Name:gsub("%.luau$", "")
 				scriptInstance.Source = Functions.clipMetadata(sourceCode)
@@ -232,7 +218,7 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 				if plugin:GetSetting("OUTPUT_ENABLED") then
 					print("Created new script: " .. scriptInstance.Name .. " (" .. scriptType .. ")")
 				end
-				pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(63, 185, 80)
+				if pullButton then pullButton.ImageLabel.ImageColor3 = Color3.fromRGB(63, 185, 80) end
 			end
 		end
 	end
@@ -240,12 +226,12 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 end
 
 ----> Retrieves latest commit data of specified file path
-function Functions.getFileSHA(repo, token, filePath)
+function Functions.getFileSHA(filePath)
 	local HttpService = game:GetService("HttpService")
-	local url = "https://api.github.com/repos/" .. repo .. "/contents/" .. filePath
+	local url = "https://api.github.com/repos/" .. plugin:GetSetting("REPOSITORY") .. "/contents/" .. filePath.."?ref="..plugin:GetSetting("BRANCH")
 
 	local headers = {
-		["Authorization"] = "token " .. token,
+		["Authorization"] = "token " .. plugin:GetSetting("TOKEN"),
 		["Accept"] = "application/vnd.github.v3+json"
 	}
 
