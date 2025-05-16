@@ -1,4 +1,5 @@
 -- @ScriptType: Script
+
 --!strict
 -- By Roller_Bott
 ---------------------------------------------------]
@@ -27,7 +28,7 @@ task.wait(1.5) ------------------------------------]
 ---------------------------------------------------]
 
 -- GLOBALS
-local toolbar = plugin:CreateToolbar("GitSync Testing 2")
+local toolbar = plugin:CreateToolbar("GSv2-T12")
 local mainBTN = toolbar:CreateButton("Push/Pull/Update", "Push, Pull, and Update Selected Scripts to and from GitHub", "rbxassetid://10734930886", "Toggle")
 local settingsBTN = toolbar:CreateButton("Settings", "Configure GitSync Settings", "rbxassetid://10734930886", "Settings")
 
@@ -111,7 +112,7 @@ repoBox.Text, tokenBox.Text, branchBox.Text = repo, token, branch
 Style.makeDraggable(frame); Style.makeDraggable(settingsuiClone.Frame);
 
 ----> Set up close-window functionality
-frame.Close.MouseButton1Click:Connect(function() isOpenMain = not(isOpenMain); uiClone.Enabled = isOpenUI; end)
+frame.Close.MouseButton1Click:Connect(function() isOpenMain = not(isOpenMain); uiClone.Enabled = isOpenMain; end)
 settingsuiClone.Frame.Close.MouseButton1Click:Connect(function() isOpenSettings = not(isOpenSettings); settingsuiClone.Enabled = isOpenSettings; end)
 
 ----> Make push system functional
@@ -127,10 +128,10 @@ pushButton.MouseButton1Click:Connect(function()
 				plugin:SetSetting("REPOSITORY", repoText)
 				plugin:SetSetting("TOKEN", tokenText)
 
-				Interactions.pushToGitHub(repoText, tokenText, pushButton)
-				Functions.populateExplorer(repoText, tokenText, explorer_frame.ScrollingFrame, "", plugin)
+				Interactions.pushToGitHub(pushButton)
+				Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
 
-				local existing = Interactions.listBranches(repoText, tokenText)
+				local existing = Interactions.listBranches()
 				for _, branch in pairs(existing) do
 					local temp =  settingBTN_template:Clone()
 					temp.Text = branch.name
@@ -173,11 +174,11 @@ pullButton.MouseButton1Click:Connect(function()
 				plugin:SetSetting("REPOSITORY", repoText)
 				plugin:SetSetting("TOKEN", tokenText)
 
-				Interactions.pullFromGitHub(repoText, tokenText, pullButton)
+				Interactions.pullFromGitHub(pullButton)
 
-				Functions.populateExplorer(repoText, tokenText, explorer_frame.ScrollingFrame, "", plugin)
+				Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
 
-				local existing = Interactions.listBranches(repoText, tokenText)
+				local existing = Interactions.listBranches()
 				for _, branch in pairs(existing) do
 					local temp =  settingBTN_template:Clone()
 					temp.Text = branch.name
@@ -219,7 +220,7 @@ loadRepoButton.MouseButton1Click:Connect(function()
 			end
 		end
 
-		Functions.populateExplorer(repoText, tokenText, explorer_frame.ScrollingFrame, "", plugin)
+		Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
 	else
 		warn("Enter both repository name and token.")
 	end
@@ -227,24 +228,24 @@ end)
 
 ----> Make branch choosing functional
 branchBox.FocusLost:Connect(function(enter, reason)
-	local repoText = repoBox.Text
-	local tokenText = tokenBox.Text
 	local branchName = branchBox.Text
 
 	plugin:SetSetting("BRANCH", settingsuiClone.Frame.branchBOX.Text)
 
-	local existing = Interactions.listBranches(repoText, tokenText)
+	local existing = Interactions.listBranches()
 
 
 	if not(table.find(existing, branchName)) then
-		local sha = Interactions.getLatestCommitSHA(repoText, "main", tokenText)
+		local sha = Interactions.getLatestCommitSHA()
 
-		if not(Interactions.createBranch(repoText, branchName, sha, tokenText)) then
+		if not(Interactions.createBranch(branchName, sha)) then
 			plugin:SetSetting("BRANCH", "main")
+		else
+			plugin:SetSetting("BRANCH", branchName)
 		end
 	end
 
-	existing = Interactions.listBranches(repoText, tokenText)
+	existing = Interactions.listBranches()
 
 	for _, item in pairs(settingsuiClone.Frame.ScrollingFrame:GetChildren()) do
 		if item:IsA("TextButton") and item ~= settingBTN_template then
@@ -259,7 +260,7 @@ branchBox.FocusLost:Connect(function(enter, reason)
 
 		temp.MouseButton1Click:Connect(function()
 			settingsuiClone.Frame.branchBOX.Text = branch.name
-			plugin:SetSetting("BRANCH", settingsuiClone.Frame.branchBOX.Text)
+			plugin:SetSetting("BRANCH", branch.name)
 		end)
 
 		temp.Visible = true
