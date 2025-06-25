@@ -26,6 +26,27 @@
 task.wait(1.5) ------------------------------------]
 ---------------------------------------------------]
 
+-- VERSION CHECK
+local success, info = pcall(function() return game:GetService("MarketplaceService"):GetProductInfo(138677233030370, Enum.InfoType.Asset) end)
+
+if success then
+	local current_upd = info.Description
+	local current_upd_header = current_upd:match("Version:%s*v[%d%.-]+")
+
+	if current_upd_header then
+		current_upd_info = current_upd_header:match("v[%d%.-]+")
+
+		if current_upd_info ~= script:GetAttribute("v") then
+			warn("VERSION CHECK FAILED: "..current_upd_info.." ~= "..script:GetAttribute("v").."!")
+			task.delay(3, function() warn("🔴 A new version of GitSync is available! Please update your plugin as soon as possible! 🔴") end)
+		else
+			task.delay(3, function() warn("🟢 Your GitSync plugin is up-to-date! 🟢") end)
+		end
+	end
+else
+	warn("Failed to retrieve product info. Please make sure your plugin is up-to-date.")
+end
+
 -- GLOBALS
 local toolbar = plugin:CreateToolbar("GitSync")
 local mainBTN = toolbar:CreateButton("Push/Pull/Update", "Push, Pull, and Update Selected Scripts to and from GitHub", "rbxassetid://120039353796013", "Action Menu")
@@ -187,7 +208,7 @@ pushButton.MouseButton1Click:Connect(function()
 	waiting = true
 	mouse.Icon = "rbxasset://SystemCursors/Busy"
 	pushButton.ImageLabel.ImageColor3 = Color3.fromRGB(88, 166, 255)
-	
+
 	if plugin:GetSetting("REPOSITORY") == "" or plugin:GetSetting("TOKEN") == "" then
 		warn("Enter both the repository name and token")
 		pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
@@ -195,32 +216,32 @@ pushButton.MouseButton1Click:Connect(function()
 	end
 
 	if not Functions.confirm("push") then return end
-	
-	
+
+
 	--local repoText = repoBox.Text
 	--local tokenText = tokenBox.Text
 	--if repoText ~= "" and tokenText ~= "" then
 	--	plugin:SetSetting("REPOSITORY", repoText)
 	--	plugin:SetSetting("TOKEN", tokenText)
 
-		Interactions.pushToGitHub(pushButton)
+	Interactions.pushToGitHub(pushButton)
 
-		for i, widget: DockWidgetPluginGui in pairs(Gitsync.ActiveExplorerWidgets) do widget:Destroy(); Gitsync.ActiveExplorerWidgets[i] = nil; end
-		Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
+	for i, widget: DockWidgetPluginGui in pairs(Gitsync.ActiveExplorerWidgets) do widget:Destroy(); Gitsync.ActiveExplorerWidgets[i] = nil; end
+	Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
 
-		--local existing = Interactions.listBranches()
-		--for _, branch in pairs(existing) do
-		--	local temp =  settingBTN_template:Clone()
-		--	temp.Text = branch.name
-		--	temp.Parent = settingsFrame.ScrollingFrame
+	--local existing = Interactions.listBranches()
+	--for _, branch in pairs(existing) do
+	--	local temp =  settingBTN_template:Clone()
+	--	temp.Text = branch.name
+	--	temp.Parent = settingsFrame.ScrollingFrame
 
-		--	temp.MouseButton1Click:Connect(function()
-		--		settingsFrame.branchBOX.Text = branch.name
-		--		plugin:SetSetting("BRANCH", settingsFrame.branchBOX.Text)
-		--	end)
+	--	temp.MouseButton1Click:Connect(function()
+	--		settingsFrame.branchBOX.Text = branch.name
+	--		plugin:SetSetting("BRANCH", settingsFrame.branchBOX.Text)
+	--	end)
 
-		--	temp.Visible = true
-		--end
+	--	temp.Visible = true
+	--end
 
 
 	task.wait(waitTime)
@@ -238,7 +259,7 @@ pullButton.MouseButton1Click:Connect(function()
 
 	waiting = true
 	mouse.Icon = "rbxasset://SystemCursors/Busy"
-	
+
 	if plugin:GetSetting("REPOSITORY") == "" or plugin:GetSetting("TOKEN") == "" then
 		warn("Enter both the repository name and token")
 		pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
@@ -344,7 +365,7 @@ branchBox.FocusLost:Connect(function(enter, reason)
 		local sha = Interactions.getLatestCommitSHA()
 
 		if not sha then return end
-		
+
 		if not(Interactions.createBranch(branchName, sha)) then
 			plugin:SetSetting("BRANCH", "main")
 			warn("Attempt to create branch \""..branchName.."\" failed")
@@ -376,7 +397,7 @@ branchBox.FocusLost:Connect(function(enter, reason)
 			Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
 
 			waiting = false
-			
+
 			if plugin:GetSetting("OUTPUT_ENABLED") then print("Refreshed explorer window") end
 		end)
 
