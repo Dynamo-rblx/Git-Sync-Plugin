@@ -200,6 +200,18 @@ function Functions.populateExplorer(parentFrame: Frame, path: string) : nil
 	end
 end
 
+----> Find an existing script/module by name in the parent and all its descendants
+function Functions.findExistingScript(parent: any, scriptName: string, scriptType: string)
+	-- First check direct children
+	for _, child in ipairs(parent:GetChildren()) do
+		if (child:IsA("Script") or child:IsA("LocalScript") or child:IsA("ModuleScript")) and child.Name == scriptName then
+			-- Found a match, verify it's the correct type or can be replaced
+			return child
+		end
+	end
+	return nil
+end
+
 ----> Generate a folder instance structure (directory) in parent by recursively searching repository directory
 function Functions.createStructure(parent: any, contents: any, pullButton: GuiButton) : nil
 	for _, item in pairs(contents) do
@@ -211,30 +223,77 @@ function Functions.createStructure(parent: any, contents: any, pullButton: GuiBu
 			local folder: any
 
 			if notService then
-				folder = Instance.new("Folder")
-				folder.Name, folder.Parent = item.name, parent
+				-- Check if folder already exists
+				local existingFolder = parent:FindFirstChild(item.name)
+				if existingFolder and existingFolder:IsA("Folder") then
+					folder = existingFolder
+				else
+					folder = Instance.new("Folder")
+					folder.Name, folder.Parent = item.name, parent
+				end
 			else folder = game[item.name] end
 
-			local subContents = Functions.getRepoContents(item.path)
+			local subContents = Functions.getRepoContents(item.path, pullButton)
 			if subContents then Functions.createStructure(folder, subContents, pullButton) end
 
 		elseif item.type == "file" and (item.name:match("%.lua$") or item.name:match("%.luau$")) then
 
-			local fileData = Functions.getRepoContents(item.path)
+			local fileData = Functions.getRepoContents(item.path, pullButton)
 			if fileData and fileData.content then
 				local sourceCode = Functions.from_base64(fileData.content)
 
 				local firstLine = sourceCode:match("^(.-)\n")
 				local scriptType = firstLine:match("%-%- @ScriptType: (.+)") or "Script"
-				local scriptInstance = Instance.new(scriptType)
+				local scriptName = item.name:gsub("%.lua$", ""):gsub("%.luau$", "")
+				local cleanedSource = Functions.clipMetadata(sourceCode)
 
-				scriptInstance.Name = item.name:gsub("%.lua$", "")
-				scriptInstance.Name = scriptInstance.Name:gsub("%.luau$", "")
-				scriptInstance.Source = Functions.clipMetadata(sourceCode)
-				scriptInstance.Parent = parent
-				Selection:Set({scriptInstance})
-				if plugin:GetSetting("OUTPUT_ENABLED") then print("Created new script: " .. scriptInstance.Name .. " (" .. scriptType .. ")") end
-				if pullButton then pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Green end
+				-- Check source size (Roblox limit is 200,000 characters)
+				if #cleanedSource >= 200000 then
+					warn("⚠️ Skipping " .. scriptName .. ": Script too large (" .. #cleanedSource .. " characters, limit is 200,000)")
+					warn("   Consider splitting this script into smaller modules")
+					if pullButton then pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red end
+					continue -- Skip this file and continue with others
+				end
+
+				-- Try to find existing script to update instead of creating duplicate
+				local scriptInstance = Functions.findExistingScript(parent, scriptName, scriptType)
+
+				if scriptInstance then
+					-- Update existing script
+					local success, err = pcall(function()
+						scriptInstance.Source = cleanedSource
+					end)
+
+					if success then
+						Selection:Set({scriptInstance})
+						if plugin:GetSetting("OUTPUT_ENABLED") then
+							print("Updated existing script: " .. scriptInstance.Name .. " (" .. scriptInstance.ClassName .. ")")
+						end
+						if pullButton then pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Green end
+					else
+						warn("Failed to update script " .. scriptName .. ": " .. tostring(err))
+						if pullButton then pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red end
+					end
+				else
+					-- Create new script
+					local success, err = pcall(function()
+						scriptInstance = Instance.new(scriptType)
+						scriptInstance.Name = scriptName
+						scriptInstance.Source = cleanedSource
+						scriptInstance.Parent = parent
+					end)
+
+					if success then
+						Selection:Set({scriptInstance})
+						if plugin:GetSetting("OUTPUT_ENABLED") then
+							print("Created new script: " .. scriptInstance.Name .. " (" .. scriptType .. ")")
+						end
+						if pullButton then pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Green end
+					else
+						warn("Failed to create script " .. scriptName .. ": " .. tostring(err))
+						if pullButton then pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red end
+					end
+				end
 			end
 		end
 	end

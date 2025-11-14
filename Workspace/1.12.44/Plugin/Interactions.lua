@@ -79,22 +79,34 @@ end
 ----> Pull entire repository from GitHub and import it to Studio
 function Interactions.pullFromGitHub(pullButton)
 
-	ChangeHistoryService:SetWaypoint("Before GitHub Pull")	
+	ChangeHistoryService:SetWaypoint("Before GitHub Pull")
 
-	local contents = Functions.getRepoContents("", pullButton)
-	if contents then
-		--local rootFolder = Instance.new("Folder")
-		--local directory = string.split(plugin:GetSetting("REPOSITORY"), "/")
-		--rootFolder.Name = directory[2]
-		--rootFolder.Parent = workspace
-		--print(workspace contents, pullButton)
-		Functions.createStructure(workspace, contents, pullButton)
-	else
-		return
+	local success, errorMsg = pcall(function()
+		local contents = Functions.getRepoContents("", pullButton)
+		if contents then
+			--local rootFolder = Instance.new("Folder")
+			--local directory = string.split(plugin:GetSetting("REPOSITORY"), "/")
+			--rootFolder.Name = directory[2]
+			--rootFolder.Parent = workspace
+			--print(workspace contents, pullButton)
+			Functions.createStructure(workspace, contents, pullButton)
+		else
+			error("Failed to fetch repository contents")
+		end
+	end)
+
+	if not success then
+		warn("❌ Pull operation failed: " .. tostring(errorMsg))
+		warn("   The plugin is still functional. Please try again or check your settings.")
+		if pullButton then
+			pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+		end
+		ChangeHistoryService:SetWaypoint("After GitHub Pull (Failed)")
+		return false
 	end
 
-	ChangeHistoryService:SetWaypoint("After GitHub Pull")	
-	return
+	ChangeHistoryService:SetWaypoint("After GitHub Pull")
+	return true
 end
 
 ----> Delete file

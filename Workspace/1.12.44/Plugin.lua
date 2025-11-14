@@ -224,22 +224,38 @@ pushButton.MouseButton1Click:Connect(function()
 	if plugin:GetSetting("REPOSITORY") == "" or plugin:GetSetting("TOKEN") == "" then
 		warn("Enter both the repository name and token")
 		pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+		waiting = false
+		mouse.Icon = "rbxasset://SystemCursors/Arrow"
 		return
 	end
 
-	if not Functions.confirm("push") then waiting=false; mouse.Icon = "rbxasset://SystemCursors/Arrow"; return end
+	if not Functions.confirm("push") then
+		waiting = false
+		mouse.Icon = "rbxasset://SystemCursors/Arrow"
+		return
+	end
 
 	pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Blue
 
-	Interactions.pushToGitHub(pushButton)
+	-- Wrap in pcall to ensure waiting flag is always reset
+	local success, result = pcall(function()
+		Interactions.pushToGitHub(pushButton)
+	end)
+
+	if not success then
+		warn("❌ Critical error during push: " .. tostring(result))
+		pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+	end
 
 	for i, widget: DockWidgetPluginGui in pairs(Gitsync.ActiveExplorerWidgets) do widget:Destroy(); Gitsync.ActiveExplorerWidgets[i] = nil; end
 	Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
 
-
 	task.wait(waitTime)
 
-	pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.White
+	-- Only set to white if there wasn't an error (check current color)
+	if pushButton.ImageLabel.ImageColor3 == Gitsync.Colors.Blue or pushButton.ImageLabel.ImageColor3 == Gitsync.Colors.Green then
+		pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.White
+	end
 
 	waiting = false
 	mouse.Icon = "rbxasset://SystemCursors/Arrow"
@@ -256,18 +272,35 @@ pullButton.MouseButton1Click:Connect(function()
 	if plugin:GetSetting("REPOSITORY") == "" or plugin:GetSetting("TOKEN") == "" then
 		warn("Enter both the repository name and token")
 		pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+		waiting = false
+		mouse.Icon = "rbxasset://SystemCursors/Arrow"
 		return
 	end
 
-	if not Functions.confirm("pull") then waiting=false; mouse.Icon = "rbxasset://SystemCursors/Arrow"; return end
+	if not Functions.confirm("pull") then
+		waiting = false
+		mouse.Icon = "rbxasset://SystemCursors/Arrow"
+		return
+	end
 
 	pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Blue
 
-	Interactions.pullFromGitHub(pullButton)
+	-- Wrap in pcall to ensure waiting flag is always reset
+	local success, result = pcall(function()
+		return Interactions.pullFromGitHub(pullButton)
+	end)
+
+	if not success then
+		warn("❌ Critical error during pull: " .. tostring(result))
+		pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+	end
 
 	task.wait(waitTime)
 
-	pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.White
+	-- Only set to white if there wasn't an error (check current color)
+	if pullButton.ImageLabel.ImageColor3 == Gitsync.Colors.Blue or pullButton.ImageLabel.ImageColor3 == Gitsync.Colors.Green then
+		pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.White
+	end
 
 	waiting = false
 	mouse.Icon = "rbxasset://SystemCursors/Arrow"
