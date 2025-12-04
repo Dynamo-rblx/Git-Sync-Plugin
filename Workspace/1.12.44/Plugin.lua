@@ -4,6 +4,10 @@
 -- By Roller_Bott
 ---------------------------------------------------]
 -- TODO --
+--> Fulfill requests from ppls
+	--> Like add custom file extension
+	--> FIX PULLING
+--> Make time to work on plugin
 
 --| ISSUES |--
 
