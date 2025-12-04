@@ -114,13 +114,13 @@ function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugi
 				explorer_frame.Size = UDim2.fromScale(1,1)
 				explorer_frame.Visible = true
 				explorer_widget.Enabled = true
-				-- Recursively populate folders
+				
 				Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, item.path, plugin)
 
 			end)
 
 		else
-			-- Clicking a file will print its content (you can add file viewer functionality)
+			
 			entry.MouseButton1Click:Connect(function()		
 				local widgetInfo = DockWidgetPluginGuiInfo.new(
 					Enum.InitialDockState.Right, false, false, 300, 200, 300, 200
@@ -151,7 +151,7 @@ function Functions.populateExplorer(repo, token, parentFrame: Frame, path, plugi
 
 				explorer_frame.Visible = true
 				explorer_widget.Enabled = true
-				-- Recursively populate folders
+				
 				Functions.populateExplorer(repo, token, explorer_frame.ScrollingFrame, item.path, plugin)
 			end)
 		end
@@ -166,12 +166,12 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 	for _, item in pairs(contents) do
 		if item.type == "dir" then
 			print("dir")
-			-- Create a folder for directories
+			
 			local folder = Instance.new("Folder")
 			folder.Name = item.name
 			folder.Parent = parent
 
-			-- Recursively fetch and process subdirectories
+			
 			local subContents = Functions.getRepoContents(repo, token, item.path)
 			if subContents then
 
@@ -179,17 +179,17 @@ function Functions.createStructure(parent, contents, repo, token, pullButton)
 			end
 
 		elseif item.type == "file" and item.name:match("%.lua$") then
-			-- Fetch file content
+			
 			local fileData = Functions.getRepoContents(repo, token, item.path)
 			if fileData and fileData.content then
 				local sourceCode = Functions.from_base64(fileData.content)
-				-- Determine script type from metadata (first line)
-				local firstLine = sourceCode:match("^(.-)\n") -- Extract first line
+				
+				local firstLine = sourceCode:match("^(.-)\n") 
 				local scriptType = firstLine:match("%-%- @ScriptType: (.+)") or "Script"
 
-				-- Create the appropriate script instance
+				
 				local scriptInstance = Instance.new(scriptType)
-				scriptInstance.Name = item.name:gsub("%.lua$", "") -- Remove ".lua"
+				scriptInstance.Name = item.name:gsub("%.lua$", "") 
 				scriptInstance.Source = sourceCode
 				scriptInstance.Parent = parent
 				
@@ -219,9 +219,9 @@ end
 
 		if success then
 			local data = HttpService:JSONDecode(response)
-			return data.sha -- Return the SHA if the file exists
+			return data.sha
 		else
-			return nil -- File doesn't exist, so no SHA needed
+			return nil
 		end
 	end
 
@@ -289,7 +289,7 @@ end
 			end
 
 			if #obj:GetChildren() > 0 then
-				Functions.scanFolder(obj, path .. obj.Name .. "/") -- Recursively scan subfolders
+				Functions.scanFolder(obj, path .. obj.Name .. "/")
 			end
 		end
 
