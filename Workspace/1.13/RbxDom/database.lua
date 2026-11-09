@@ -1,3 +1,4 @@
+-- @ScriptType: ModuleScript
 return {
 	Classes = {
 		Accessory = {

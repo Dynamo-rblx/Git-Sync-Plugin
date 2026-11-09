@@ -1,3 +1,5 @@
+-- @ScriptType: Script
+-- @RunContext: 3
 --!native
 
 -- By Roller_Bott

@@ -1,3 +1,4 @@
+-- @ScriptType: ModuleScript
 local database = require(script.database)
 local Error = require(script.Error)
 local PropertyDescriptor = require(script.PropertyDescriptor)

@@ -1,3 +1,4 @@
+-- @ScriptType: ModuleScript
 local data = {
 	Connections = {} :: {RBXScriptConnection};
 	
