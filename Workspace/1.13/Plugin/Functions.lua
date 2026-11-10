@@ -118,7 +118,7 @@ function Functions.clipMetadata(source: string | Script | ModuleScript | LocalSc
 			newSource = newSource.."\n"..line
 		elseif not nextLine then
 			if not line:match("%-%- @RunContext: (%d+)") then
-				newSource = newSource..line
+				newSource = newSource.."\n"..line
 				nextLine = true
 			end
 		else
@@ -288,6 +288,7 @@ function Functions.populateExplorer(parentFrame: Frame, path: string) : ()
 
 	if not contents then return end
 
+Gitsync.CurrentPath = path or ""
 	for _, item in ipairs(contents) do
 		local isFolder = (item.type == "dir")
 		local entry = Functions.createEntry(item.name, parentFrame, isFolder)
@@ -318,13 +319,16 @@ function Functions.populateExplorer(parentFrame: Frame, path: string) : ()
 				})
 				if success then
 					local scriptDocument = ScriptEditorService:FindScriptDocument(scriptInstance)
-					ScriptEditorService.TextDocumentDidClose:Connect(function(oldDocument: ScriptDocument)
+					local connection
+					connection = ScriptEditorService.TextDocumentDidClose:Connect(function(oldDocument: ScriptDocument)
 						if oldDocument == scriptDocument then
 							scriptInstance:Destroy()
+							connection:Disconnect()
 						end
 					end)
 				else
 					print(`Failed to open script document: {err}`)
+					scriptInstance:Destroy()
 				end
 			end)
 		end
