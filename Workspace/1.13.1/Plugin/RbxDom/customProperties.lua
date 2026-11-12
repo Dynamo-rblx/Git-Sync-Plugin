@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local CollectionService = game:GetService("CollectionService")
 local ScriptEditorService = game:GetService("ScriptEditorService")
 
