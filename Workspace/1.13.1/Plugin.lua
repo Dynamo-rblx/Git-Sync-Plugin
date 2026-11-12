@@ -395,7 +395,7 @@ if game["Run Service"]:IsEdit() then
 			if not sha then return end
 
 			if not(Interactions.createBranch(branchName, sha)) then
-				plugin:SetSetting(Gitsync.Settings.BRANCH, "main")
+				branchBox.Text = plugin:GetSetting(Gitsync.Settings.BRANCH)
 				warn("Attempt to create branch \""..branchName.."\" failed")
 			else
 				plugin:SetSetting(Gitsync.Settings.BRANCH, branchName or plugin:GetSetting(Gitsync.Settings.BRANCH))
