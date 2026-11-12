@@ -124,7 +124,7 @@ function Interactions.pullSelectedFromGitHub(pullButton, selected)
 		end
 	end
 
-	if next(scripts) == 0 then
+	if next(scripts) == nil then
 		warn("No scripts selected!")
 		pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
 		return
@@ -151,8 +151,10 @@ function Interactions.pullSelectedFromGitHub(pullButton, selected)
 			success = false
 			continue
 		end
-
-		success = success and Functions.updateScript(scriptInstance, Functions.fromBase64(fileData.content))
+		
+		if not Functions.updateScript(scriptInstance, Functions.fromBase64(fileData.content)) then
+			success = false
+		end
 	end
 
 	ChangeHistoryService:SetWaypoint("After GitHub Pull")
