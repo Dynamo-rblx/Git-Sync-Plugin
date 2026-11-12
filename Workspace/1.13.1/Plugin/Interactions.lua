@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 ---------------------------------------------------
 -- GLOBALS
 
@@ -37,7 +38,16 @@ function Interactions.pushToGitHub(pushButton)
 	ChangeHistoryService:SetWaypoint("Before GitHub Push")
 
 	for name, data in pairs(scripts) do
-		local filePath = Functions.getScriptPath(data.Object)
+		local repoInfo = data.Object:GetAttribute("GitSyncRepository")
+
+		if repoInfo and repoInfo:lower() ~= plugin:GetSetting(Gitsync.Settings.REPOSITORY):lower() then
+			warn(`Skipping {data.Object:GetFullName()}: linked to another repository.`)
+			pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+			continue
+		end
+
+		local filePath = data.Object:GetAttribute("GitSyncPath") or Functions.getScriptPath(data.Object)
+		
 		local fileUrl = url .. filePath
 		local scriptWithMetadata
 		
@@ -81,25 +91,73 @@ function Interactions.pushToGitHub(pushButton)
 	end
 end
 
-----> Pull entire repository from GitHub and import it to Studio
-function Interactions.pullFromGitHub(pullButton)
+----> Pull folder or entire repository from GitHub and import it to Studio (little button)
+function Interactions.pullFromGitHub(pullButton, path, root)
 
 	ChangeHistoryService:SetWaypoint("Before GitHub Pull")	
 
-	local contents = Functions.getRepoContents("", pullButton)
+	local contents = Functions.getRepoContents(path or "", pullButton)
 	if contents then
 		--local rootFolder = Instance.new("Folder")
 		--local directory = string.split(plugin:GetSetting(Gitsync.Settings.REPOSITORY), "/")
 		--rootFolder.Name = directory[2]
 		--rootFolder.Parent = workspace
 		--print(workspace contents, pullButton)
-		Functions.createStructure(workspace, contents, pullButton)
+		Functions.createStructure(root or workspace, contents, pullButton)
 	else
 		return
 	end
 
 	ChangeHistoryService:SetWaypoint("After GitHub Pull")	
 	return
+end
+
+----> Pull selected scripts from GitHub (big button)
+function Interactions.pullSelectedFromGitHub(pullButton, selected)
+	local scripts = {}
+
+	for _, obj in selected do
+		scripts[obj] = obj:IsA("LuaSourceContainer") or nil
+
+		for _, instance in obj:GetDescendants() do
+			scripts[instance] = instance:IsA("LuaSourceContainer") or nil
+		end
+	end
+
+	if next(scripts) == 0 then
+		warn("No scripts selected!")
+		pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+		return
+	end
+
+	local success = true
+
+	ChangeHistoryService:SetWaypoint("Before GitHub Pull")
+
+	for scriptInstance in pairs(scripts) do
+		local repoInfo = scriptInstance:GetAttribute("GitSyncRepository")
+
+		if repoInfo and not (repoInfo:lower() == plugin:GetSetting(Gitsync.Settings.REPOSITORY):lower()) then
+			warn(`Skipping {scriptInstance:GetFullName()}: linked to another repository`)
+			success = false
+			continue
+		end
+
+		local path = repoInfo and scriptInstance:GetAttribute("GitSyncPath") or Functions.getScriptPath(scriptInstance)
+		local fileData = Functions.getRepoContents(path, pullButton)
+
+		if not (fileData and fileData.type == "file" and fileData.content) then
+			warn(`Pull failed: {path}`)
+			success = false
+			continue
+		end
+
+		success = success and Functions.updateScript(scriptInstance, Functions.fromBase64(fileData.content))
+	end
+
+	ChangeHistoryService:SetWaypoint("After GitHub Pull")
+
+	pullButton.ImageLabel.ImageColor3 = if success then Gitsync.Colors.Green else Gitsync.Colors.Red
 end
 
 ----> Delete file
