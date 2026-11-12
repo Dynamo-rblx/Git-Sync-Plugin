@@ -431,7 +431,7 @@ function Functions.getFileSHA(filePath: string) : string | nil
 		})
 	end)
 
-	if response.Success then
+	if success and response.Success then
 		local data = HttpService:JSONDecode(response.Body)
 		return data.sha -- Update
 	else
