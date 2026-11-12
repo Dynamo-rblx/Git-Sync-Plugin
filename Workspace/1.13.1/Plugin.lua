@@ -1,4 +1,6 @@
 -- @ScriptType: Script
+-- @RunContext: 0
+-- @ScriptType: Script
 -- @RunContext: 3
 --!native
 
@@ -60,9 +62,9 @@ if game["Run Service"]:IsEdit() then
 	---------------------------------------------------
 	-- GLOBALS
 	local toolbar = plugin:CreateToolbar("GitSync")
-	local mainBTN = toolbar:CreateButton("Push/Pull/Update", "Push, Pull, and Update Selected Scripts to and from GitHub", "rbxassetid://120039353796013", "Menu")
-	local settingsBTN = toolbar:CreateButton("Settings", "Configure GitSync Settings", "rbxassetid://140418971118966", "Config")
-	local infoBTN = toolbar:CreateButton("Info", "Help, Source Code, and more!", "rbxassetid://76424011275500", "Info")
+	local mainBTN = toolbar:CreateButton("Push/Pull/Update", "Push, Pull, and Update Selected Scripts to and from GitHub", "rbxassetid://120039353796013", "F Menu")
+	local settingsBTN = toolbar:CreateButton("Settings", "Configure GitSync Settings", "rbxassetid://140418971118966", "F Config")
+	local infoBTN = toolbar:CreateButton("Info", "Help, Source Code, and more!", "rbxassetid://76424011275500", "F Info")
 
 	local mouse = plugin:GetMouse()
 
@@ -113,7 +115,7 @@ if game["Run Service"]:IsEdit() then
 	assert(infoui, "Info UI not found in the script!")
 
 	----> Initialize widgets
-	local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 300, 200, 300, 200)
+	local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 300, 500, 300, 200)
 	local explorer_widget = plugin:CreateDockWidgetPluginGuiAsync("GitHubSyncExplorer", widgetInfo)
 	local explorer_frame = script.ExplorerWindow:Clone()
 	explorer_widget.Title = "Git Explorer - "..plugin:GetSetting(Gitsync.Settings.BRANCH)
@@ -132,13 +134,13 @@ if game["Run Service"]:IsEdit() then
 
 	----> Connect function for unloading behavior
 	plugin.Unloading:Connect(function()
-		
+
 		running = false
 		if uiClone then uiClone:Destroy() end
 		if settingsuiClone then settingsuiClone:Destroy() end
 		if infouiClone then infouiClone:Destroy() end	
 		if explorer_widget then explorer_widget:Destroy() end
-		
+
 	end)
 
 	----> Initialize UI input behavior
@@ -152,6 +154,7 @@ if game["Run Service"]:IsEdit() then
 	local loadBranchesButton = settingsFrame.LoadBranches
 	local refreshButton = explorer_frame.Buttons.RefreshBTN
 	local backButton = explorer_frame.Buttons.BackButton
+	local pullFolderButton = explorer_frame.Buttons.PullFolderBTN
 
 	local settingBTN_template = settingsFrame.ScrollingFrame.template
 
@@ -162,8 +165,9 @@ if game["Run Service"]:IsEdit() then
 	Style.makeDraggable(frame); Style.makeDraggable(settingsFrame); Style.makeDraggable(infoFrame);
 
 	----> Setup tooltips for buttons
-	Style.addTooltip(pushButton, "Push to Github"); Style.addTooltip(pullButton, "Pull from Github")
-	Style.addTooltip(loadRepoButton, "Load repo"); Style.addTooltip(refreshButton, "Refresh")
+	Style.addTooltip(pushButton, "Push selected to Github"); Style.addTooltip(pullButton, "Pull selected from GitHub")
+	Style.addTooltip(loadRepoButton, "View Repository"); Style.addTooltip(refreshButton, "Refresh viewer")
+	Style.addTooltip(pullFolderButton, "Pull current directory")
 
 	----> Set up close-window functionality
 	frame.Close.MouseButton1Click:Connect(function() isOpenMain = not(isOpenMain); uiClone.Enabled = isOpenMain; end)
@@ -234,12 +238,16 @@ if game["Run Service"]:IsEdit() then
 		mouse.Icon = "rbxasset://SystemCursors/Arrow"
 	end)
 
-	----> Make pull system functional
+	----> Make selected-pull system functional
 	pullButton.MouseButton1Click:Connect(function()
 		if waiting then return end
+		
+		local selected = Selection:Get()
 
-		waiting = true
-		mouse.Icon = "rbxasset://SystemCursors/Busy"
+		if #selected == 0 then
+			warn("No scripts selected: use repository viewer for pulling directories")
+			return
+		end
 
 		if plugin:GetSetting(Gitsync.Settings.REPOSITORY) == "" or plugin:GetSetting(Gitsync.Settings.TOKEN) == "" then
 			warn("Enter both the repository name and token")
@@ -247,18 +255,63 @@ if game["Run Service"]:IsEdit() then
 			return
 		end
 
-		if not Functions.confirm("pull") then waiting=false; mouse.Icon = "rbxasset://SystemCursors/Arrow"; return end
+		waiting = true
+		mouse.Icon = "rbxasset://SystemCursors/Busy"
+		
+		local success = pcall(function()
+			if not Functions.confirm("pull") then return end
+			pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Blue
+			Interactions.pullSelectedFromGitHub(pullButton, selected)
+			task.wait(waitTime)
+			pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.White
+		end)
 
-		pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Blue
-
-		Interactions.pullFromGitHub(pullButton)
-
-		task.wait(waitTime)
-
-		pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.White
 
 		waiting = false
 		mouse.Icon = "rbxasset://SystemCursors/Arrow"
+		
+		if not success then
+			warn(`Pull failed`)
+			pullButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+		end
+	end)
+	
+	----> Make pull-directory system functional
+	pullFolderButton.MouseButton1Click:Connect(function()
+		local path = Gitsync.CurrentPath or ""
+		local selected = Selection:Get()
+
+		if #selected > 1 then
+			warn("Multiple instances selected: select one pull destination in Studio's Explorer, or select nothing to default to Workspace.")
+			return
+		end
+
+		local root = selected[1] or workspace
+
+		if plugin:GetSetting(Gitsync.Settings.REPOSITORY) == "" or plugin:GetSetting(Gitsync.Settings.TOKEN) == "" then
+			warn("Enter both the repository name and token")
+			return
+		end
+		
+		waiting = true
+		mouse.Icon = "rbxasset://SystemCursors/Busy"
+
+		local source = (path == "") and "repository root" or path
+		local success = pcall(function()
+			if not Functions.confirm(`pull directory\n({source} → {root:GetFullName()})`) then return end
+			pullFolderButton.ImageLabel.ImageColor3 = Gitsync.Colors.Blue
+			Interactions.pullFromGitHub(pullFolderButton, path, root)
+			task.wait(waitTime)
+			pullFolderButton.ImageLabel.ImageColor3 = Gitsync.Colors.Gray -- bc the images themselves are different colors ik weird
+		end)
+
+		waiting = false
+		mouse.Icon = "rbxasset://SystemCursors/Arrow"
+
+		if not success then
+			warn(`Pull directory failed: ({source} → {root:GetFullName()})`)
+			pullFolderButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
+		end
 	end)
 
 	----> Make repository explorer functional
@@ -279,12 +332,12 @@ if game["Run Service"]:IsEdit() then
 
 		Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
 	end)
-	
+
 	backButton.MouseButton1Click:Connect(function()
 		local directories = Gitsync.CurrentPath:split("/")
 		table.remove(directories, #directories)
 		local newPath = table.concat(directories, "/")
-		
+
 		Gitsync.CurrentPath = newPath
 		Functions.populateExplorer(explorer_frame.ScrollingFrame, Gitsync.CurrentPath)
 	end)
@@ -383,7 +436,7 @@ if game["Run Service"]:IsEdit() then
 	----> Make toggle output setting functional
 	settingsFrame.PrintToggle.MouseButton1Click:Connect(function()
 		plugin:SetSetting(Gitsync.Settings.OUTPUTENABLED, not(plugin:GetSetting(Gitsync.Settings.OUTPUTENABLED)))
-		
+
 		----> Update settings widget display
 		if plugin:GetSetting(Gitsync.Settings.OUTPUTENABLED) then
 			settingsFrame.PrintToggle.TextColor3 = Gitsync.Colors.Green
@@ -416,7 +469,7 @@ if game["Run Service"]:IsEdit() then
 
 		----> Update selected scripts list
 		local scripts = Functions.getSelectedScripts()
-	
+
 		for i, v in pairs(frame.ScrollingFrame:GetChildren()) do
 			if not(scripts[v.Name]) and v ~= frame.ScrollingFrame.template and v:IsA("TextLabel") then
 				v:Destroy()
