@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local base64 = require(script.Parent.base64)
 
 local function identity(...)
