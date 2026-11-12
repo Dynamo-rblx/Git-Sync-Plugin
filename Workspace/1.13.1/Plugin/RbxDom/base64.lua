@@ -1,5 +1,5 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
+
 local EncodingService = game:GetService("EncodingService")
 
 return {
