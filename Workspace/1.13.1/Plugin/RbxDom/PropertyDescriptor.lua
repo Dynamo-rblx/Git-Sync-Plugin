@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 local Error = require(script.Parent.Error)
 local customProperties = require(script.Parent.customProperties)
 
