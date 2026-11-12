@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 const Camera = workspace.CurrentCamera
 
 local Style = {}
