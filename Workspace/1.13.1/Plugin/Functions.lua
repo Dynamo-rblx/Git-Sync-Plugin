@@ -1,4 +1,5 @@
 -- @ScriptType: ModuleScript
+-- @ScriptType: ModuleScript
 ---------------------------------------------------
 -- GLOBALS
 
@@ -139,11 +140,11 @@ function Functions.confirm(attempt: string): boolean
 	local confirm_frame = script.Parent.ConfirmWindow:Clone()
 	confirm_frame.Parent = confirm_widget
 	confirm_frame.Size = UDim2.fromScale(1,1)
-	
+
 	confirm_frame.Warning.Text = "Are you sure you want to "..attempt.."?"
 	local c,d,e : RBXScriptSignal
 	local result
-	
+
 	local function cleanup()
 		if c then c:Disconnect() end   
 		if d then d:Disconnect() end
@@ -153,7 +154,7 @@ function Functions.confirm(attempt: string): boolean
 			confirm_widget:Destroy()
 		end)
 	end
-	
+
 	c = confirm_frame.Confirm.MouseButton1Click:Connect(function()
 		confirm_frame.Warning.Text = "Attempt to "..attempt.." confirmed."
 		confirm_frame.Warning.TextColor3 = Gitsync.Colors.Green
@@ -170,7 +171,7 @@ function Functions.confirm(attempt: string): boolean
 		cleanup()
 		result = false
 	end)
-	
+
 	repeat task.wait() until result or result == false
 	return result
 end
@@ -212,7 +213,7 @@ function Functions.getRepoContents(path: string, pullButton: GuiButton)
 		})
 	end)
 
-	if response.Success then
+	if success and response.Success then
 		return HttpService:JSONDecode(response.Body)
 	else
 		warn("Failed to fetch repository contents.")
@@ -253,7 +254,7 @@ local function createScript(sourceCode: string | {string}, item: any, parent: In
 		firstLine = sourceCode[1]:match("^(.-)\n")
 		secondLine = sourceCode[1]:gsub("^(.-)\n","",1):match("^(.-)\n")
 	end
-	
+
 	local scriptType, RunContext
 	--A first line may not have \n or exist at all, same for the second
 	if firstLine ~= nil then
@@ -279,6 +280,27 @@ local function createScript(sourceCode: string | {string}, item: any, parent: In
 	return scriptInstance, scriptType
 end
 
+function Functions.updateScript(scriptInstance, sourceCode: string): boolean
+	local scriptType = sourceCode:match("^%-%- @ScriptType: ([^\r\n]+)")
+
+	if scriptType and scriptType ~= scriptInstance.ClassName then
+		warn(`Type mismatch | {scriptType} ≠ {scriptInstance.ClassName} | Cannot update {scriptInstance:GetFullName()}`)
+		return false
+	end
+
+	local RunContext = sourceCode:match("^[^\n]*\n%-%- @RunContext: (%d+)")
+
+	ScriptEditorService:UpdateSourceAsync(scriptInstance, function()
+		return Functions.clipMetadata(sourceCode)
+	end)
+
+	if scriptInstance:IsA("Script") and RunContext then
+		scriptInstance.RunContext = tonumber(RunContext)
+	end
+
+	return true
+end
+
 
 ----> Populate explorer window (repository viewer) with entries
 function Functions.populateExplorer(parentFrame: Frame, path: string) : ()
@@ -288,7 +310,7 @@ function Functions.populateExplorer(parentFrame: Frame, path: string) : ()
 
 	if not contents then return end
 
-Gitsync.CurrentPath = path or ""
+	Gitsync.CurrentPath = path or ""
 	for _, item in ipairs(contents) do
 		local isFolder = (item.type == "dir")
 		local entry = Functions.createEntry(item.name, parentFrame, isFolder)
@@ -315,7 +337,7 @@ Gitsync.CurrentPath = path or ""
 				-- Attempt to open in the native Roblox script editor
 				local success, err = ScriptEditorService:OpenScriptDocumentAsync(scriptInstance, {
 					Temporary = true,
-					InitialReadOnlyReasons = {"Gitsync doesn't save scripts opened via Explorer"}
+					--InitialReadOnlyReasons = {"Gitsync doesn't save scripts opened via Explorer"} -- This was causing problems for some reason with my studio version
 				})
 				if success then
 					local scriptDocument = ScriptEditorService:FindScriptDocument(scriptInstance)
@@ -341,7 +363,8 @@ function Functions.createStructure(parent: any, contents: any, pullButton: GuiBu
 	local tOE = plugin:GetSetting(Gitsync.Settings.OUTPUTENABLED)
 
 	for _, item in pairs(contents) do
-		local notService = not(game:FindFirstChild(item.name))
+		-- changed bc nesting w/ service names would break ↓
+		local notService = not (parent == workspace and item.path == item.name and game:FindFirstChild(item.name)) 
 		if item.type == "dir" then
 			if tOE then if notService then print("dir") else print("service") end end
 
@@ -363,6 +386,8 @@ function Functions.createStructure(parent: any, contents: any, pullButton: GuiBu
 				local sourceCode = Functions.fromBase64(fileData.content, item.name)
 
 				local scriptInstance, scriptType = createScript(sourceCode, item, parent)
+				scriptInstance:SetAttribute("GitSyncRepository", plugin:GetSetting(Gitsync.Settings.REPOSITORY))
+				scriptInstance:SetAttribute("GitSyncPath", item.path)
 
 				Selection:Set({scriptInstance})
 				if tOE then print("Created new script: " .. scriptInstance.Name .. " (" .. scriptType .. ")") end
