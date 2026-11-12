@@ -1,5 +1,5 @@
 -- @ScriptType: ModuleScript
--- @ScriptType: ModuleScript
+
 ---------------------------------------------------
 -- GLOBALS
 
