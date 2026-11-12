@@ -1,0 +1,47 @@
+site_name: GitSync Documentation
+site_description: Native GitHub integration for Roblox Studio
+site_url: !ENV [READTHEDOCS_CANONICAL_URL, "http://127.0.0.1:8000/"]
+
+repo_name: Dynamo-rblx/Git-Sync-Plugin
+repo_url: https://github.com/Dynamo-rblx/Git-Sync-Plugin
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+
+theme:
+  name: shadcn
+  accent: "#2563eb"
+  icon: assets/logo.png
+  favicon: assets/favicon.png
+
+nav:
+  - Home: index.md
+  - Getting started:
+    - Workflow: workflow.md # Answer: "What is GitHub?" and "How is this related to the GitHub flow?"
+    - Plugin Setup: plugin-setup.md # Cover installing and getting a token
+    - User Interface:
+      - Menu Panel: menu.md # Cover all buttons (including repository viewer buttons), all text boxes, and the scrolling frame
+      - Config Panel: config.md # Cover "print output" toggle, "load branch list" button, text boxes, creating branches, and the fact that no branches show if the repository is empty or not found
+      - Info Panel: info.md # Briefly cover the documentation, repository, and asset store links. (The field guide link will be replaced with a devforum post with the readthedocs link)
+  - Features: # Cover each by itself in an organized way separate from the plugin panel organization
+    - Pushing: pushing.md
+    - Pulling: pulling.md # Both types
+    - Branches: branches.md
+    - Repository Viewer: repository-viewer.md # Talk more about previews and the specific buttons etc.
+  - Community:
+    - Troubleshooting: troubleshooting.md # Help with common issues
+    # Repository access error: check the owner/repository format, token expiration, and token access to that repository.
+    # "My push keeps failing": check write permissions and the selected branch; look in Studio’s Output for the GitHub error.
+    # What is "script belongs to another repository?": GitSyncRepository and GitSyncPath attributes.
+    # Why is "directory pull creating duplicates?": Pull Directory imports scripts while Pull Selected updates scripts.
+    # "My empty repository is having branch problems": push a script to create the init commit before creating additional branches.
+    # "I edited a script using the repository viewer and GitHub didn't update": the script previews from repository viewer are temporary.
+    # "Pull Selected can’t find a file?": Previously GitSync-imported scripts use their saved attributes to determine pull source. The rest use their Studio hierarchy, such as ServerScriptService/Main.lua.
+    - Contribution: contribution.md # Detail past contributors on specific versions and have a note at the top on how to contribute
+    - Changelog: changelog.md # Paste changelog from DevForum and expand on it
+
+plugins:
+  - search
+
+extra_css:
+  - stylesheets/custom.css

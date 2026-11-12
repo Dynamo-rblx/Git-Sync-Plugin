@@ -1,0 +1,162 @@
+/* Light mode */
+:root {
+  color-scheme: light;
+
+  --background: #ffffff;
+  --foreground: #24292f;
+  --heading: #161b22;
+  --panel: #f6f8fa;
+  --muted-foreground: #57606a;
+  --border: #d0d7de;
+  --link: #0969da;
+  --quote-background: #eaf3ff;
+  --selection: #cce5ff;
+
+  --primary: #58a6ff;
+  --primary-foreground: #161b22;
+  --destructive: #f85149;
+  --theme-accent: #58a6ff;
+}
+
+/* Dark mode: GitSync colors */
+:root.dark {
+  color-scheme: dark;
+
+  --background: #161b22;
+  --foreground: #e6edf3;
+  --heading: #ffffff;
+  --panel: #21262d;
+  --muted-foreground: #c9d1d9;
+  --border: #30363d;
+  --link: #58a6ff;
+  --quote-background: #1b2a3d;
+  --selection: #264f78;
+}
+
+/* Shared theme mappings */
+:root {
+  --card: var(--panel);
+  --card-foreground: var(--foreground);
+  --popover: var(--panel);
+  --popover-foreground: var(--foreground);
+  --secondary: var(--panel);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--panel);
+  --accent: var(--panel);
+  --accent-foreground: var(--link);
+  --input: var(--border);
+  --ring: #58a6ff;
+
+  --sidebar: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--panel);
+  --sidebar-accent-foreground: var(--link);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  --surface: var(--panel);
+  --surface-foreground: var(--foreground);
+  --code: var(--panel);
+  --code-foreground: var(--foreground);
+  --code-highlight: var(--border);
+  --code-number: var(--muted-foreground);
+  --selection-foreground: var(--foreground);
+}
+
+/* Article typography */
+article,
+.prose {
+  color: var(--foreground);
+
+  --tw-prose-body: var(--foreground);
+  --tw-prose-headings: var(--heading);
+  --tw-prose-bold: var(--heading);
+  --tw-prose-links: var(--link);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--muted-foreground);
+}
+
+article :is(h1, h2, h3, h4, h5, h6, strong, b) {
+  color: var(--heading);
+}
+
+article :is(p, li, dt, dd, th, td) {
+  color: var(--foreground);
+}
+
+article a {
+  color: var(--link);
+}
+
+article a:hover {
+  text-decoration: underline;
+}
+
+/* Colored quote blocks */
+article blockquote {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--quote-background);
+  border: 1px solid var(--border);
+  border-left: 4px solid #58a6ff;
+  border-radius: 6px;
+  color: var(--foreground);
+  font-style: normal;
+}
+
+article blockquote > :first-child {
+  margin-top: 0;
+}
+
+article blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+article blockquote p::before,
+article blockquote p::after {
+  content: none;
+}
+
+/* Give the header room for a larger logo */
+body {
+  --header-height: 80px;
+}
+
+/* Site title */
+header a[data-slot="button"]:has(> h1) {
+  height: auto;
+  padding: 8px 0;
+  gap: 14px;
+  background: transparent;
+}
+
+/* Logo image */
+header a[data-slot="button"]:has(> h1) :is(img, svg) {
+  width: 48px;
+  height: 48px;
+  max-width: none;
+  object-fit: contain;
+}
+
+/* Wordmark */
+header a[data-slot="button"] > h1 {
+  color: var(--heading);
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: -0.7px;
+  line-height: 1.15;
+}
+
+/* Sidebar category headings */
+[data-slot="sidebar-group-label"] {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--heading);
+  height: auto;
+  padding-top: 14px;
+  padding-bottom: 8px;
+}
