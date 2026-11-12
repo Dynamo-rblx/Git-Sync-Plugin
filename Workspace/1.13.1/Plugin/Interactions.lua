@@ -61,7 +61,7 @@ function Interactions.pushToGitHub(pushButton)
 			message = "Updated " .. filePath,
 			content = Functions.toBase64(scriptWithMetadata),
 			branch = plugin:GetSetting(Gitsync.Settings.BRANCH),
-			sha = Functions.getFileSHA(filePath) or Interactions.getLatestCommitSHA()
+			sha = Functions.getFileSHA(filePath)
 		}
 
 		local headers = {
@@ -78,12 +78,12 @@ function Interactions.pushToGitHub(pushButton)
 			})
 		end)
 
-		if response.Success then
+		if success and response.Success then
 			if plugin:GetSetting(Gitsync.Settings.OUTPUTENABLED) then print("Pushed: ", filePath) end
 			pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Green
 		else
 			warn("Failed to push: ", filePath)
-			warn("Response: ", response.Body)
+			warn("Response: ", success and response.Body or tostring(response))
 			pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
 		end
 
@@ -187,13 +187,13 @@ function Interactions.deleteFile(filePath, sha)
 		})
 	end)
 
-	if response.Success then
+	if success and response.Success then
 		if plugin:GetSetting(Gitsync.Settings.OUTPUTENABLED) then
 			print("Successfully deleted " .. filePath)
 		end
 		return true
 	else
-		warn("Failed to delete file: " .. response.Body)
+		warn("Failed to delete file: " .. success and response.Body or tostring(response))
 		return false
 	end
 end
@@ -211,12 +211,12 @@ function Interactions.listBranches() : {string}
 		})
 	end)
 
-	if response.Success then
+	if success and response.Success then
 		local branches = game:GetService("HttpService"):JSONDecode(response.Body)
 		if plugin:GetSetting(Gitsync.Settings.OUTPUTENABLED) then print("Refreshed branch list: ", branches) end
 		return branches
 	else
-		warn("Failed to list branches: " .. response.Body)
+		warn("Failed to list branches: " .. success and response.Body or tostring(response))
 		return {}
 	end
 end
@@ -237,34 +237,13 @@ function Interactions.getLatestCommitSHA()
 		})
 	end)
 	
-	local data = HttpService:JSONDecode(response.Body)
-	--assert(response.Success, "Failed to get latest commit SHA:"..response.Body)
-	--print(data)
-	if not response.Success then
-		warn("Failed to get latest commit SHA:"..response.Body)
-		warn("Attempting to use branch \"main\" as SHA")
-		local url = "https://api.github.com/repos/" .. plugin:GetSetting(Gitsync.Settings.REPOSITORY) .. "/branches/main"
-
-		success, response = pcall(function()
-			return HttpService:RequestAsync({
-				Url = url,
-				Method = "GET",
-				Headers = {
-					["Authorization"] = "token " .. plugin:GetSetting(Gitsync.Settings.TOKEN),
-					["Accept"] = "application/vnd.github.v3+json"
-				}
-			})
-		end)
-		
-		if not response.Success then
-			warn("Failed to get latest commit SHA using branch \"main\": "..response.Body)
-			warn("Attempting to make initial commit")
-			
-			
-		end
+	if not success or not response.Success then
+		warn("Failed to get latest commit SHA: " ..(success and response.Body or tostring(response)))
+		return nil
 	end
-	
-	if data then return data.commit.sha end
+
+	local data = HttpService:JSONDecode(response.Body)
+	return data.commit.sha
 end
 
 ----> Create a new branch based on the specified commit
@@ -291,13 +270,13 @@ function Interactions.createBranch(branchName, baseSha)
 		})
 	end)
 
-	if response.Success then
+	if success and response.Success then
 		if plugin:GetSetting(Gitsync.Settings.OUTPUTENABLED) then
 			print("Successfully created branch: " .. branchName)
 		end
 		return true
 	else
-		warn("Failed to create branch: " .. response.Body)
+		warn("Failed to create branch: " .. success and response.Body or tostring(response))
 		return nil
 	end
 end
