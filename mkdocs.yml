@@ -29,6 +29,7 @@ nav:
     - Branches: branches.md
     - Repository Viewer: repository-viewer.md # Talk more about previews and the specific buttons etc.
   - Community:
+    - Version Compare: version-compare.md
     - Troubleshooting: troubleshooting.md # Help with common issues
     # Repository access error: check the owner/repository format, token expiration, and token access to that repository.
     # "My push keeps failing": check write permissions and the selected branch; look in Studio’s Output for the GitHub error.

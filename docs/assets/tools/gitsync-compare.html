@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="GitSync Version Compare">
+    <title>GitSync Version Compare</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --paper: #fff;
+            --panel: #f5f5f5;
+            --ink: #343434;
+            --heading: #222;
+            --blue: #b33c2c;
+            --muted: #666;
+            --border: #d9d9d9;
+            --soft: #ececec;
+            --selected: #ffede8;
+            --left: #ffede8;
+            --right: #e9f4ec;
+            --left-mark: #b33c2c;
+            --right-mark: #24733c;
+            --gap: #fafafa;
+            --quote: #fff0eb
+        }
+
+        :root.dark {
+            color-scheme: dark;
+            --paper: #161b22;
+            --panel: #21262d;
+            --ink: #e6edf3;
+            --heading: #fff;
+            --blue: #58a6ff;
+            --muted: #c9d1d9;
+            --border: #30363d;
+            --soft: #30363d;
+            --selected: #1b2a3d;
+            --left: #382323;
+            --right: #193126;
+            --left-mark: #f85149;
+            --right-mark: #3fb950;
+            --gap: #1b2027;
+            --quote: #1b2a3d
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+        }
+
+        button,
+        input,
+        select {
+            font: inherit;
+            color: inherit
+        }
+
+        button,
+        select,
+        input[type=search] {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--paper)
+        }
+
+        button,
+        select {
+            cursor: pointer
+        }
+
+        button {
+            padding: 8px 12px;
+            font-weight: 500
+        }
+
+        button:hover {
+            background: var(--selected);
+            border-color: var(--blue)
+        }
+
+        button:disabled,
+        select:disabled {
+            cursor: wait;
+            opacity: .6
+        }
+
+        a {
+            color: var(--blue);
+            text-decoration: none;
+            text-underline-offset: 3px
+        }
+
+        a:hover {
+            text-decoration: underline
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--blue);
+            outline-offset: 3px
+        }
+
+        header,
+        main {
+            max-width: 1600px;
+            margin: auto
+        }
+
+        header {
+            padding: 24px 24px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 18px
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -.6px;
+            line-height: 1.2;
+            margin: 0;
+            color: var(--heading)
+        }
+
+        header p {
+            margin: 8px 0 0;
+            color: var(--muted)
+        }
+
+        .header-tools {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px
+        }
+
+        main {
+            padding: 0 24px 20px
+        }
+
+        .versions {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 16px;
+            align-items: end;
+            padding: 12px 0 20px
+        }
+
+        .version {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 6px 12px;
+            align-items: center;
+            min-width: 0
+        }
+
+        .version>label {
+            grid-column: 1/-1;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600
+        }
+
+        .version select {
+            width: 100%;
+            min-width: 0;
+            padding: 10px 12px;
+            font-size: 15px
+        }
+
+        .version a {
+            font-size: 12px
+        }
+
+        #swap {
+            height: 44px;
+            min-width: 44px;
+            font-size: 20px;
+            padding: 4px 12px
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            border-top: 1px solid var(--border);
+            padding: 12px 0;
+            font-size: 12px;
+            min-height: 48px
+        }
+
+        .tools {
+            display: flex;
+            align-items: center;
+            gap: 16px
+        }
+
+        .tools label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap
+        }
+
+        input[type=checkbox] {
+            accent-color: var(--blue);
+            width: 15px;
+            height: 15px;
+            margin: 0
+        }
+
+        #summary {
+            color: var(--muted)
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: 220px minmax(0, 1fr);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            height: clamp(420px, calc(100dvh - 285px), 1000px);
+            background: var(--paper)
+        }
+
+        aside {
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            min-height: 0
+        }
+
+        .file-heading {
+            padding: 14px 12px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px
+        }
+
+        .file-heading strong {
+            color: var(--heading)
+        }
+
+        #file-count {
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        #filter {
+            width: calc(100% - 24px);
+            margin: 0 12px 10px;
+            padding: 8px;
+            font-size: 12px
+        }
+
+        #files {
+            overflow: auto;
+            padding: 0 6px 12px;
+            flex: 1
+        }
+
+        #files button {
+            border: 0;
+            border-radius: 4px;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+            padding: 8px 6px;
+            font-size: 12px;
+            display: flex;
+            gap: 8px;
+            align-items: start;
+            line-height: 1.45;
+            border-left: 2px solid transparent
+        }
+
+        #files button:hover {
+            background: var(--soft)
+        }
+
+        #files button[aria-current=true] {
+            background: var(--selected);
+            border-left-color: var(--blue);
+            color: var(--blue)
+        }
+
+        .filename {
+            overflow-wrap: anywhere
+        }
+
+        .mark {
+            flex: 0 0 13px;
+            font-weight: 700;
+            color: var(--left-mark)
+        }
+
+        .mark.equal {
+            color: var(--muted)
+        }
+
+        .mark.right {
+            color: var(--right-mark)
+        }
+
+        #empty {
+            padding: 15px;
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .comparison {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0
+        }
+
+        .filebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            min-height: 44px;
+            font-size: 12px
+        }
+
+        #path {
+            overflow-wrap: anywhere;
+            font-weight: 600;
+            color: var(--heading)
+        }
+
+        #line-summary {
+            font-size: 11px;
+            color: var(--muted);
+            white-space: nowrap
+        }
+
+        .pane-heads {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-bottom: 1px solid var(--border);
+            background: var(--panel)
+        }
+
+        .pane-heads>div {
+            padding: 9px 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            min-width: 0;
+            font-size: 12px
+        }
+
+        .pane-heads>div+div {
+            border-left: 1px solid var(--border)
+        }
+
+        .panes {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            flex: 1;
+            min-height: 0
+        }
+
+        .pane {
+            overflow: auto;
+            position: relative;
+            scrollbar-gutter: stable;
+            overscroll-behavior: contain;
+            outline-offset: -3px;
+            tab-size: 4
+        }
+
+        .pane+.pane {
+            border-left: 1px solid var(--border)
+        }
+
+        .code {
+            min-width: 100%;
+            width: max-content;
+            font: 12px/22px ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace
+        }
+
+        .line {
+            height: 22px;
+            display: flex;
+            padding-right: 18px;
+            white-space: pre
+        }
+
+        .number {
+            position: sticky;
+            left: 0;
+            background: var(--paper);
+            width: 48px;
+            flex: 0 0 48px;
+            text-align: right;
+            padding: 0 10px 0 6px;
+            color: var(--muted);
+            user-select: none;
+            border-right: 1px solid var(--border);
+            margin-right: 12px
+        }
+
+        .line.left-only,
+        .line.left-only .number {
+            background: var(--left)
+        }
+
+        .line.right-only,
+        .line.right-only .number {
+            background: var(--right)
+        }
+
+        .line.left-only {
+            box-shadow: inset 2px 0 var(--left-mark)
+        }
+
+        .line.right-only {
+            box-shadow: inset 2px 0 var(--right-mark)
+        }
+
+        .line.gap {
+            background: var(--gap)
+        }
+
+        .line.gap .number {
+            background: transparent
+        }
+
+        .message {
+            padding: 24px 18px;
+            max-width: 540px;
+            line-height: 1.7;
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        .message strong {
+            color: var(--heading)
+        }
+
+        .message a {
+            display: inline-block;
+            margin-top: 12px
+        }
+
+        .notice {
+            padding: 10px 14px;
+            background: var(--quote);
+            border-left: 3px solid var(--blue);
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            line-height: 1.5
+        }
+
+        .error {
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--left-mark);
+            border-radius: 6px;
+            background: var(--left);
+            margin: 0 0 16px;
+            line-height: 1.6;
+            font-size: 13px
+        }
+
+        .error button {
+            margin-left: 12px
+        }
+
+        footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding-top: 12px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.6
+        }
+
+        .legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap
+        }
+
+        .swatch {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            margin-right: 5px;
+            background: var(--left);
+            border: 1px solid var(--left-mark);
+            border-radius: 2px
+        }
+
+        .swatch.gray {
+            background: var(--right);
+            border-color: var(--right-mark)
+        }
+
+        [hidden] {
+            display: none !important
+        }
+
+        :root[data-embedded] header {
+            display: none
+        }
+
+        :root[data-embedded] main {
+            padding: 0 0 12px;
+            max-width: none
+        }
+
+        :root[data-embedded] .versions {
+            padding-top: 4px
+        }
+
+        :root[data-embedded] .workspace {
+            height: 660px
+        }
+
+        @media(max-width:850px) {
+            header {
+                padding: 18px 12px
+            }
+
+            main {
+                padding: 0 12px 16px
+            }
+
+            .workspace {
+                grid-template-columns: 175px minmax(0, 1fr)
+            }
+
+            .version a {
+                display: none
+            }
+
+            .version {
+                grid-template-columns: 1fr
+            }
+
+            .tools {
+                gap: 10px
+            }
+
+            .toolbar {
+                align-items: start
+            }
+
+            .number {
+                width: 36px;
+                flex-basis: 36px;
+                margin-right: 8px
+            }
+
+            .code {
+                font-size: 11px
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 6px
+            }
+        }
+
+        @media(max-width:560px) {
+            header {
+                align-items: start
+            }
+
+            h1 {
+                font-size: 22px
+            }
+
+            .header-tools>a {
+                display: none
+            }
+
+            .versions {
+                gap: 8px
+            }
+
+            .version select {
+                padding: 9px 6px;
+                font-size: 13px
+            }
+
+            .toolbar {
+                flex-direction: column;
+                gap: 10px
+            }
+
+            .workspace {
+                display: flex;
+                flex-direction: column;
+                height: 650px
+            }
+
+            aside {
+                max-height: 165px;
+                border-right: 0;
+                border-bottom: 1px solid var(--border);
+                flex-shrink: 0
+            }
+
+            #files {
+                min-height: 44px
+            }
+
+            #files button {
+                padding: 5px 8px
+            }
+
+            .comparison {
+                flex: 1
+            }
+
+            .filebar {
+                padding: 8px;
+                flex-wrap: wrap
+            }
+
+            #line-summary {
+                white-space: normal
+            }
+
+            .pane-heads>div {
+                padding: 8px;
+                font-size: 11px
+            }
+
+            .message {
+                padding: 14px 8px
+            }
+        }
+    </style>
+    <script>
+        // When embedded in the docs, follow its light/dark switch without a second theme control.
+        const embedded = window.parent !== window;
+        if (embedded) document.documentElement.dataset.embedded = '';
+        const media = matchMedia('(prefers-color-scheme: dark)');
+        let docsRoot = null;
+        try { if (embedded && parent.location.origin === location.origin) docsRoot = parent.document.documentElement; } catch (_) { }
+        function updateTheme() {
+            let dark;
+            if (docsRoot) dark = docsRoot.classList.contains('dark');
+            else { let choice; try { choice = localStorage.getItem('gitsync-compare-theme'); } catch (_) { } dark = choice ? choice === 'dark' : media.matches; }
+            document.documentElement.classList.toggle('dark', dark);
+            const button = document.getElementById('theme-toggle');
+            if (button) { button.hidden = embedded; button.textContent = dark ? 'Light mode' : 'Dark mode'; }
+        }
+        if (docsRoot) new MutationObserver(updateTheme).observe(docsRoot, { attributes: true, attributeFilter: ['class'] });
+        media.addEventListener('change', updateTheme);
+        updateTheme();
+    </script>
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>Version comparison</h1>
+            <p>Compare the source of two GitSync releases.</p>
+        </div>
+        <div class="header-tools"><button id="theme-toggle" type="button">Theme</button><a
+                href="https://github.com/Dynamo-rblx/Git-Sync-Plugin/" target="_blank"
+                rel="noopener noreferrer">Repository ↗</a></div>
+    </header>
+    <main>
+        <div id="error" class="error" role="alert" hidden><span></span><button id="retry" type="button">Retry</button>
+        </div>
+        <section class="versions" aria-label="Versions to compare">
+            <div class="version"><label for="left-version">Left</label><select id="left-version" disabled>
+                    <option>Loading…</option>
+                </select><a id="left-folder" target="_blank" rel="noopener noreferrer" hidden>Source ↗</a></div>
+            <button id="swap" type="button" title="Swap left and right versions"
+                aria-label="Swap left and right versions" disabled>⇄</button>
+            <div class="version"><label for="right-version">Right</label><select id="right-version" disabled>
+                    <option>Loading…</option>
+                </select><a id="right-folder" target="_blank" rel="noopener noreferrer" hidden>Source ↗</a></div>
+        </section>
+        <div class="toolbar"><span id="summary" role="status" aria-live="polite">Finding versions in Workspace…</span>
+            <div class="tools"><label><input id="changed-only" type="checkbox">Changed files only</label><label><input
+                        id="sync" type="checkbox" checked>Sync scrolling</label></div>
+        </div>
+        <section class="workspace" aria-label="Source comparison">
+            <aside aria-label="Files">
+                <div class="file-heading"><strong>Files</strong><span id="file-count">—</span></div><input id="filter"
+                    type="search" placeholder="Filter files…" aria-label="Filter files">
+                <nav id="files" aria-label="Choose a file"></nav>
+            </aside>
+            <div class="comparison" id="comparison" aria-busy="true">
+                <div class="filebar"><span id="path">Choose a file</span><span id="line-summary" role="status"></span>
+                </div>
+                <div class="pane-heads">
+                    <div><strong id="left-title">Left</strong><a id="left-source" target="_blank"
+                            rel="noopener noreferrer" hidden>Raw ↗</a></div>
+                    <div><strong id="right-title">Right</strong><a id="right-source" target="_blank"
+                            rel="noopener noreferrer" hidden>Raw ↗</a></div>
+                </div>
+                <div id="notice" class="notice" hidden></div>
+                <div class="panes">
+                    <div id="left-pane" class="pane" tabindex="0" role="region" aria-label="Left version source">
+                        <div class="message">Loading repository versions…</div>
+                    </div>
+                    <div id="right-pane" class="pane" tabindex="0" role="region" aria-label="Right version source">
+                        <div class="message">Loading repository versions…</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <footer>
+            <div class="legend"><span><i class="swatch"></i>Left-only lines</span><span><i
+                        class="swatch gray"></i>Right-only lines</span><span>= Unchanged · ~ Modified · L / R One side
+                    only</span></div><span id="footnote">Live from GitHub · Selections saved in this browser</span>
+        </footer>
+    </main>
+    <script>
+        'use strict';
+        // Standalone page: no build step, JS packages, or server required.
+        const REPO = 'Dynamo-rblx/Git-Sync-Plugin', API = 'https://api.github.com/repos/' + REPO;
+        const STORAGE = 'gitsync-compare-v1', CACHE = 'gitsync-versions-v1';
+        const $ = id => document.getElementById(id);
+        let versions = [], currentFiles = [], activePath = '', generation = 0, fileGeneration = 0, retryAction;
+        const trees = new Map(), blobs = new Map();
+        function saved() { try { return JSON.parse(localStorage.getItem(STORAGE)) || {} } catch { return {} } }
+        function persist() { try { localStorage.setItem(STORAGE, JSON.stringify({ left: $('left-version').value, right: $('right-version').value, path: activePath, changed: $('changed-only').checked, sync: $('sync').checked })) } catch { $('footnote').textContent = 'Live from GitHub · Browser storage unavailable' } }
+        function showError(error, action) { $('error').hidden = false; $('error').querySelector('span').textContent = error.message || String(error); retryAction = action }
+        function clearError() { $('error').hidden = true }
+        async function request(path) {
+            const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 25000);
+            try {
+                const response = await fetch(API + path, { headers: { Accept: 'application/vnd.github+json' }, signal: controller.signal });
+                if (!response.ok) {
+                    if (response.status === 429 || (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0')) {
+                        const reset = Number(response.headers.get('x-ratelimit-reset'));
+                        throw new Error('GitHub’s public API limit was reached.' + (reset ? ' Try again after ' + new Date(reset * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '.' : ' Please try again later.'));
+                    }
+                    throw new Error('GitHub returned ' + response.status + '. Please try again.');
+                }
+                return await response.json();
+            } catch (error) { if (error.name === 'AbortError') throw new Error('GitHub took too long to respond. Please retry.'); if (error instanceof TypeError) throw new Error('Could not reach GitHub. Check your connection and retry.'); throw error }
+            finally { clearTimeout(timeout) }
+        }
+        async function memo(map, key, load) { if (!map.has(key)) { const promise = load().catch(error => { map.delete(key); throw error }); map.set(key, promise) } return map.get(key) }
+        function compareVersions(a, b) { const x = a.name.replace(/^v/, '').split('.').map(Number), y = b.name.replace(/^v/, '').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const n = (y[i] || 0) - (x[i] || 0); if (n) return n } return a.name.localeCompare(b.name) }
+        async function loadVersions() {
+            clearError(); $('summary').textContent = 'Finding versions in Workspace…'; $('comparison').setAttribute('aria-busy', 'true');
+            try {
+                let entries; try { const cache = JSON.parse(localStorage.getItem(CACHE)); if (cache && Date.now() - cache.time < 300000 && Array.isArray(cache.entries)) entries = cache.entries } catch { }
+                if (!entries) { entries = await request('/contents/Workspace'); if (!Array.isArray(entries)) throw new Error('GitHub did not return a version directory.'); try { localStorage.setItem(CACHE, JSON.stringify({ time: Date.now(), entries })) } catch { } }
+                versions = entries.filter(e => e.type === 'dir' && /^v?\d+(?:\.\d+)*$/.test(e.name)).sort(compareVersions);
+                if (!versions.length) throw new Error('No numbered version folders were found in Workspace.');
+                const prefs = saved();
+                for (const side of ['left', 'right']) {
+                    const select = $(side + '-version'); select.replaceChildren();
+                    versions.forEach((v, i) => { const option = document.createElement('option'); option.value = v.name; option.textContent = v.name + (i === 0 ? ' (latest)' : ''); select.append(option) });
+                    select.value = versions.some(v => v.name === prefs[side]) ? prefs[side] : versions[side === 'left' ? 0 : Math.min(1, versions.length - 1)].name;
+                    select.disabled = false;
+                }
+                $('swap').disabled = false; $('changed-only').checked = !!prefs.changed; $('sync').checked = prefs.sync !== false; activePath = typeof prefs.path === 'string' ? prefs.path : '';
+                await compare();
+            } catch (error) { $('summary').textContent = 'Versions unavailable'; $('comparison').setAttribute('aria-busy', 'false'); showError(error, loadVersions); message('Load failed. Use Retry above.', 'Load failed. Use Retry above.') }
+        }
+        async function getTree(version) { return memo(trees, version.sha, async () => { const data = await request('/git/trees/' + version.sha + '?recursive=1'); if (data.truncated) throw new Error('GitHub truncated this version’s file list; a complete comparison is unavailable.'); return new Map(data.tree.filter(f => f.type === 'blob').map(f => [f.path, f])) }) }
+        function version(side) { return versions.find(v => v.name === $(side + '-version').value) }
+        function folderURL(v) { return 'https://github.com/' + REPO + '/tree/HEAD/' + v.path.split('/').map(encodeURIComponent).join('/') }
+        function fileURL(side, path) { return folderURL(version(side)).replace('/tree/HEAD/', '/blob/HEAD/') + '/' + path.split('/').map(encodeURIComponent).join('/') }
+        async function compare() {
+            const id = ++generation; ++fileGeneration; clearError(); persist(); $('summary').textContent = 'Comparing file lists…'; $('comparison').setAttribute('aria-busy', 'true');
+            const l = version('left'), r = version('right');
+            for (const side of ['left', 'right']) { const v = side === 'left' ? l : r; $(side + '-title').textContent = v.name; $(side + '-folder').href = folderURL(v); $(side + '-folder').hidden = false; $(side + '-source').hidden = true }
+            currentFiles = []; renderFiles(); $('path').textContent = 'Loading files…'; $('line-summary').textContent = ''; $('notice').hidden = true; message('Loading file list…', 'Loading file list…');
+            try {
+                const [left, right] = await Promise.all([getTree(l), getTree(r)]); if (id !== generation) return;
+                currentFiles = [...new Set([...left.keys(), ...right.keys()])].sort().map(path => { const a = left.get(path), b = right.get(path); return { path, left: a, right: b, status: !a ? 'R' : !b ? 'L' : a.sha === b.sha ? '=' : '~' } });
+                const changed = currentFiles.filter(f => f.status !== '=').length;
+                $('summary').textContent = changed + ' changed / ' + currentFiles.length + ' files' + (l.name === r.name ? ' · Same version' : '');
+                renderFiles(); const visible = filteredFiles(); const chosen = visible.find(f => f.path === activePath) || visible.find(f => f.status !== '=' && /\.lua$/i.test(f.path)) || visible.find(f => f.path === 'Plugin.lua') || visible[0];
+                if (chosen) await openFile(chosen.path); else { activePath = ''; $('path').textContent = 'No files to display'; message('No files match your filters.', 'No files match your filters.'); $('comparison').setAttribute('aria-busy', 'false') }
+            } catch (error) { if (id !== generation) return; $('summary').textContent = 'Comparison unavailable'; $('comparison').setAttribute('aria-busy', 'false'); showError(error, compare); message('File list unavailable.', 'File list unavailable.') }
+        }
+        function filteredFiles() { const query = $('filter').value.toLowerCase(); return currentFiles.filter(f => (!$('changed-only').checked || f.status !== '=') && f.path.toLowerCase().includes(query)) }
+        function renderFiles() {
+            const files = filteredFiles(); $('file-count').textContent = files.length; $('files').replaceChildren(); const fragment = document.createDocumentFragment();
+            for (const file of files) { const button = document.createElement('button'); button.type = 'button'; button.setAttribute('aria-current', String(file.path === activePath)); const names = { '=': 'Unchanged', '~': 'Modified', L: 'Only on left', R: 'Only on right' }; button.title = names[file.status] + ': ' + file.path; const mark = document.createElement('span'); mark.className = 'mark ' + (file.status === '=' ? 'equal' : file.status === 'R' ? 'right' : ''); mark.textContent = file.status; mark.setAttribute('aria-hidden', 'true'); const name = document.createElement('span'); name.className = 'filename'; name.textContent = file.path; button.setAttribute('aria-label', button.title); button.append(mark, name); button.addEventListener('click', () => openFile(file.path)); fragment.append(button) }
+            if (!files.length) { const empty = document.createElement('div'); empty.id = 'empty'; empty.textContent = currentFiles.length ? 'No matching files.' : 'Waiting for files…'; fragment.append(empty) } $('files').append(fragment);
+        }
+        function message(left, right) { for (const side of ['left', 'right']) { const el = document.createElement('div'); el.className = 'message'; el.textContent = side === 'left' ? left : right; $(side + '-pane').replaceChildren(el) } }
+        async function getText(file) { if (!file) return null; return memo(blobs, file.sha, async () => { const data = await request('/git/blobs/' + file.sha); if (data.encoding !== 'base64') throw new Error('GitHub returned an unsupported file encoding.'); const bytes = Uint8Array.from(atob(data.content.replace(/\s/g, '')), c => c.charCodeAt(0)); if (bytes.includes(0)) return { binary: true }; return { text: new TextDecoder('utf-8', { fatal: true }).decode(bytes) } }) }
+        // Exact line comparison. Bound the LCS matrix for large, unrelated files.
+        // The fallback remains lossless but groups the unmatched middle into one change.
+        function diffLines(a, b) {
+            let start = 0, end = 0; const out = [];
+            while (start < a.length && start < b.length && a[start] === b[start]) { out.push([start, start]); start++ }
+            while (end < a.length - start && end < b.length - start && a[a.length - 1 - end] === b[b.length - 1 - end]) end++;
+            const n = a.length - start - end, m = b.length - start - end; let simplified = false;
+            if (n && m && n * m <= 4000000) {
+                const width = m + 1, dp = new Uint32Array((n + 1) * width);
+                for (let i = n - 1; i >= 0; i--)for (let j = m - 1; j >= 0; j--)dp[i * width + j] = a[start + i] === b[start + j] ? dp[(i + 1) * width + j + 1] + 1 : Math.max(dp[(i + 1) * width + j], dp[i * width + j + 1]);
+                let i = 0, j = 0; while (i < n || j < m) { if (i < n && j < m && a[start + i] === b[start + j]) out.push([start + i++, start + j++]); else if (i < n && (j === m || dp[(i + 1) * width + j] >= dp[i * width + j + 1])) out.push([start + i++, null]); else out.push([null, start + j++]) }
+            } else { simplified = !!(n && m); for (let i = 0; i < n; i++)out.push([start + i, null]); for (let j = 0; j < m; j++)out.push([null, start + j]) }
+            for (let i = end; i > 0; i--)out.push([a.length - i, b.length - i]);
+            // Put corresponding removed/inserted runs alongside each other.
+            const aligned = []; let k = 0;
+            while (k < out.length) { if (out[k][0] !== null && out[k][1] !== null) { aligned.push(out[k++]); continue } const l = [], r = []; while (k < out.length && (out[k][0] === null || out[k][1] === null)) { const pair = out[k++]; if (pair[0] !== null) l.push(pair[0]); if (pair[1] !== null) r.push(pair[1]) } for (let i = 0; i < Math.max(l.length, r.length); i++)aligned.push([l[i] ?? null, r[i] ?? null]) }
+            return { rows: aligned, simplified };
+        }
+        function lines(text) { if (text === null) return []; const result = text.replace(/\r\n/g, '\n').split('\n'); if (result.at(-1) === '') result.pop(); return result }
+        function renderCode(side, rows, a, b) {
+            const code = document.createElement('div'); code.className = 'code'; const index = side === 'left' ? 0 : 1, source = side === 'left' ? a : b;
+            for (const pair of rows) { const n = pair[index], other = pair[1 - index], line = document.createElement('div'); line.className = 'line'; if (n === null) line.classList.add('gap'); else if (other === null || a[pair[0]] !== b[pair[1]]) line.classList.add(side + '-only'); const num = document.createElement('span'); num.className = 'number'; num.textContent = n === null ? '' : String(n + 1); num.setAttribute('aria-hidden', 'true'); const text = document.createElement('span'); text.textContent = n === null ? '' : source[n]; line.append(num, text); code.append(line) }
+            $(side + '-pane').replaceChildren(code); $(side + '-pane').scrollTop = 0; $(side + '-pane').scrollLeft = 0;
+        }
+        function fileInfo(side, file, text) { const pane = $(side + '-pane'), box = document.createElement('div'); box.className = 'message'; const title = document.createElement('strong'); title.textContent = !file ? 'File absent' : file.binary ? 'Binary file' : 'Preview unavailable'; box.append(title, document.createElement('br'), document.createTextNode(text)); if (file) { const link = document.createElement('a'); link.href = fileURL(side, activePath); link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Open file on GitHub ↗'; box.append(document.createElement('br'), link) } pane.replaceChildren(box) }
+        async function openFile(path) {
+            const file = currentFiles.find(f => f.path === path); if (!file) return; const id = ++fileGeneration, versionId = generation; activePath = path; persist(); renderFiles(); clearError(); $('path').textContent = path; $('line-summary').textContent = 'Loading…'; $('notice').hidden = true; $('comparison').setAttribute('aria-busy', 'true');
+            for (const side of ['left', 'right']) { const f = file[side], link = $(side + '-source'); link.hidden = !f; if (f) { link.href = fileURL(side, path) + '?raw=1' } }
+            message(file.left ? 'Loading source…' : 'This file is absent in the left version.', file.right ? 'Loading source…' : 'This file is absent in the right version.');
+            try {
+                if (/\.(rbxm|png|jpg|jpeg|gif|webp|ico|zip|woff2?|ttf|mp4|pdf)$/i.test(path)) { for (const side of ['left', 'right']) fileInfo(side, file[side] ? { ...file[side], binary: true } : null, file[side] ? 'Binary assets cannot be displayed as a text diff.' : 'This file does not exist in this version.'); $('line-summary').textContent = file.status === '=' ? 'Identical asset' : 'Binary asset'; return }
+                const [left, right] = await Promise.all([getText(file.left), getText(file.right)]); if (id !== fileGeneration || versionId !== generation) return;
+                if (left?.binary || right?.binary) { for (const side of ['left', 'right']) fileInfo(side, file[side] ? { ...file[side], binary: true } : null, 'Binary content cannot be displayed as a text diff.'); $('line-summary').textContent = 'Binary content'; return }
+                const a = lines(left?.text ?? null), b = lines(right?.text ?? null);
+                if (a.length + b.length > 24000) { for (const side of ['left', 'right']) fileInfo(side, file[side], 'This file is too large for the inline preview. Open it on GitHub.'); $('line-summary').textContent = file.status === '=' ? 'Identical file' : 'Large file'; return }
+                const result = diffLines(a, b); let onlyLeft = 0, onlyRight = 0;
+                for (const [i, j] of result.rows) { if (i !== null && (j === null || a[i] !== b[j])) onlyLeft++; if (j !== null && (i === null || a[i] !== b[j])) onlyRight++ }
+                const sameText = left?.text === right?.text;
+                $('line-summary').textContent = !file.left ? 'Only on right' : !file.right ? 'Only on left' : sameText ? 'Identical' : !onlyLeft && !onlyRight ? 'Line endings differ' : onlyLeft + ' left / ' + onlyRight + ' right';
+                const notes = []; if (result.simplified) notes.push('Large change: unmatched lines are grouped; alignment is simplified.');
+                const noFinal = []; if (left?.text && !left.text.endsWith('\n')) noFinal.push('left'); if (right?.text && !right.text.endsWith('\n')) noFinal.push('right');
+                // if (noFinal.length) notes.push('No final newline: ' + noFinal.join(' and ') + '.');
+                if (notes.length) { $('notice').textContent = notes.join(' '); $('notice').hidden = false }
+                renderCode('left', result.rows, a, b); renderCode('right', result.rows, a, b);
+                if (!file.left) fileInfo('left', null, 'This file does not exist in this version.'); else if (!a.length) fileInfo('left', file.left, 'This file is empty.');
+                if (!file.right) fileInfo('right', null, 'This file does not exist in this version.'); else if (!b.length) fileInfo('right', file.right, 'This file is empty.');
+            } catch (error) { if (id !== fileGeneration || versionId !== generation) return; $('line-summary').textContent = 'Unavailable'; message('Source unavailable. Use Retry above.', 'Source unavailable. Use Retry above.'); showError(error, () => openFile(path)) }
+            finally { if (id === fileGeneration && versionId === generation) $('comparison').setAttribute('aria-busy', 'false') }
+        }
+        $('left-version').addEventListener('change', compare); $('right-version').addEventListener('change', compare);
+        $('swap').addEventListener('click', () => { const l = $('left-version'), r = $('right-version'), value = l.value; l.value = r.value; r.value = value; compare() });
+        $('changed-only').addEventListener('change', () => { persist(); renderFiles() }); $('sync').addEventListener('change', persist); $('filter').addEventListener('input', renderFiles); $('retry').addEventListener('click', () => retryAction?.());
+        // Ignore programmatic scroll events, including when the other pane clamps its range.
+        const pendingScroll = new WeakMap();
+        for (const side of ['left', 'right']) $(side + '-pane').addEventListener('scroll', () => { if (!$('sync').checked) return; const from = $(side + '-pane'), to = $(side === 'left' ? 'right-pane' : 'left-pane'), expected = pendingScroll.get(from); pendingScroll.delete(from); if (expected && Math.abs(from.scrollTop - expected.top) < 2 && Math.abs(from.scrollLeft - expected.left) < 2) return; if (Math.abs(from.scrollTop - to.scrollTop) > 1 || Math.abs(from.scrollLeft - to.scrollLeft) > 1) { to.scrollTop = from.scrollTop; to.scrollLeft = from.scrollLeft; pendingScroll.set(to, { top: to.scrollTop, left: to.scrollLeft }) } }, { passive: true });
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const choice = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            try { localStorage.setItem('gitsync-compare-theme', choice); } catch (_) { }
+            document.documentElement.classList.toggle('dark', choice === 'dark');
+            document.getElementById('theme-toggle').textContent = choice === 'dark' ? 'Light mode' : 'Dark mode';
+        });
+        updateTheme();
+        loadVersions();
+    </script>
+</body>
+
+</html>

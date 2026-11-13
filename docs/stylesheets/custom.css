@@ -1,24 +1,25 @@
-/* Light mode */
+/* Light mode: GitSync logo colors */
 :root {
   color-scheme: light;
 
   --background: #ffffff;
-  --foreground: #24292f;
-  --heading: #161b22;
-  --panel: #f6f8fa;
-  --muted-foreground: #57606a;
-  --border: #d0d7de;
-  --link: #0969da;
-  --quote-background: #eaf3ff;
-  --selection: #cce5ff;
+  --foreground: #343434;
+  --heading: #222222;
+  --panel: #f5f5f5;
+  --muted-foreground: #666666;
+  --border: #d9d9d9;
+  --link: #b33c2c;
+  --quote-background: #fff0eb;
+  --selection: #ffd4c9;
+  --highlight: #ffede8;
 
-  --primary: #58a6ff;
-  --primary-foreground: #161b22;
-  --destructive: #f85149;
-  --theme-accent: #58a6ff;
+  --primary: #b33c2c;
+  --primary-foreground: #ffffff;
+  --destructive: #b33c2c;
+  --theme-accent: #ef4e38;
 }
 
-/* Dark mode: GitSync colors */
+/* Dark mode: GitSync plugin colors */
 :root.dark {
   color-scheme: dark;
 
@@ -31,6 +32,12 @@
   --link: #58a6ff;
   --quote-background: #1b2a3d;
   --selection: #264f78;
+  --highlight: #21262d;
+
+  --primary: #58a6ff;
+  --primary-foreground: #161b22;
+  --destructive: #f85149;
+  --theme-accent: #58a6ff;
 }
 
 /* Shared theme mappings */
@@ -42,16 +49,16 @@
   --secondary: var(--panel);
   --secondary-foreground: var(--foreground);
   --muted: var(--panel);
-  --accent: var(--panel);
+  --accent: var(--highlight);
   --accent-foreground: var(--link);
   --input: var(--border);
-  --ring: #58a6ff;
+  --ring: var(--theme-accent);
 
   --sidebar: var(--background);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--panel);
+  --sidebar-accent: var(--highlight);
   --sidebar-accent-foreground: var(--link);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
@@ -102,7 +109,7 @@ article blockquote {
   padding: 1rem 1.25rem;
   background: var(--quote-background);
   border: 1px solid var(--border);
-  border-left: 4px solid #58a6ff;
+  border-left: 4px solid var(--theme-accent);
   border-radius: 6px;
   color: var(--foreground);
   font-style: normal;
@@ -159,4 +166,12 @@ header a[data-slot="button"] > h1 {
   height: auto;
   padding-top: 14px;
   padding-bottom: 8px;
+}
+
+/* Active and hovered sidebar pages */
+[data-slot="sidebar-menu-button"][data-active="true"],
+[data-slot="sidebar-menu-button"]:hover {
+  color: var(--link);
+  background-color: var(--highlight);
+  border-color: transparent;
 }
