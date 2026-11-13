@@ -38,7 +38,7 @@ nav:
     # "My empty repository is having branch problems": push a script to create the init commit before creating additional branches.
     # "I edited a script using the repository viewer and GitHub didn't update": the script previews from repository viewer are temporary.
     # "Pull Selected can’t find a file?": Previously GitSync-imported scripts use their saved attributes to determine pull source. The rest use their Studio hierarchy, such as ServerScriptService/Main.lua.
-    - Contribution: contributing.md # Detail past contributors on specific versions and have a note at the top on how to contribute
+    - Contributing: contributing.md # Detail past contributors on specific versions and have a note at the top on how to contribute
     - Changelog: changelog.md # Paste changelog from DevForum and expand on it
 
 plugins:
