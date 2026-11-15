@@ -24,10 +24,9 @@ end
 ---------------------------------------------------
 -- FUNCTION DECLARATIONS
 ----> Push selected scripts to specified repository & branch
-function Interactions.pushToGitHub(pushButton, commitmsg)
+function Interactions.pushToGitHubSequentially(pushButton, commitmsg)
 	local revisedcommitmsg = (commitmsg or ""):gsub("^%s+", ""):gsub("%s+$", "")
 
-	local scripts = Functions.getSelectedScripts()
 	local scripts = Functions.getSelectedScripts()
 	local url = "https://api.github.com/repos/" .. plugin:GetSetting(Gitsync.Settings.REPOSITORY) .. "/contents/"
 
@@ -51,7 +50,7 @@ function Interactions.pushToGitHub(pushButton, commitmsg)
 
 		local filePath = data.Object:GetAttribute("GitSyncPath") or Functions.getScriptPath(data.Object)
 		
-		local fileUrl = url .. filePath
+		local fileUrl = url .. Functions.encodePath(filePath)
 		local scriptWithMetadata
 		
 		if data["RunContext"] then
@@ -91,6 +90,125 @@ function Interactions.pushToGitHub(pushButton, commitmsg)
 		end
 
 		ChangeHistoryService:SetWaypoint("After GitHub Push")
+	end
+end
+
+----> Push selected scripts to specified repository & branch in ONE BATCH COMMIT. :O
+function Interactions.pushToGitHub(pushButton, commitmsg)
+	local success, badnews = pcall(function()
+		local scripts = Functions.getSelectedScripts()
+		local repository = plugin:GetSetting(Gitsync.Settings.REPOSITORY)
+		local branch = plugin:GetSetting(Gitsync.Settings.BRANCH)
+		local baseUrl = "https://api.github.com/repos/" .. repository
+
+		local msg = (commitmsg or ""):gsub("^%s+", ""):gsub("%s+$", "")
+		local entries = {}
+		local remotePaths = {}
+
+		for _, data in scripts do
+			local repoInfo = data.Object:GetAttribute("GitSyncRepository")
+
+			if repoInfo and repoInfo:lower() ~= repository:lower() then
+				warn(`Skipping {data.Object:GetFullName()}: linked to another repository.`)
+				continue
+			end
+
+			local path = data.Object:GetAttribute("GitSyncPath")
+				or Functions.getScriptPath(data.Object)
+
+			if remotePaths[path] then
+				warn(`Multiple scripts selected point to same remote path: {path}`)
+			end
+			
+			remotePaths[path] = true
+
+			local source = "-- @ScriptType: " .. data.Class .. "\n"
+
+			if data.RunContext then
+				source ..= "-- @RunContext: " .. data.RunContext.Value .. "\n"
+			end
+
+			source ..= data.Source
+
+			table.insert(entries, {
+				path = path,
+				mode = "100644",
+				type = "blob",
+				content = source, ----> No encoding necessary for blobs
+			})
+		end
+
+		if #entries == 0 then
+			warn("No valid scripts selected!")
+			return
+		end
+		
+		----> Everybody say "Thank you YouTube! Thank you ChatGPT!"
+		----> Sequential pushing has been made obsolete. New tech is in.
+		local function request(method, endpoint, body)
+			local options = {
+				Url = baseUrl .. endpoint,
+				Method = method,
+				Headers = {
+					["Authorization"] = "token " .. plugin:GetSetting(Gitsync.Settings.TOKEN),
+					["Accept"] = "application/vnd.github+json",
+					["Content-Type"] = "application/json",
+				},
+			}
+
+			if body then
+				options.Body = HttpService:JSONEncode(body)
+			end
+
+			local response = HttpService:RequestAsync(options)
+			assert(response.Success, `GitHub {method} {endpoint} failed ({response.StatusCode}): {response.Body}`)
+
+			return HttpService:JSONDecode(response.Body)
+		end
+		
+		local branches = request("GET", "/branches?per_page=1")
+		
+		----> Gotta do an init push the old fashioned way
+		if #branches == 0 then
+			Interactions.pushToGitHubSequentially(pushButton, commitmsg)
+			return
+		end
+
+		local head = request("GET", "/commits/" .. HttpService:UrlEncode("heads/" .. branch))
+
+		----> Make blobs for files with changes
+		local tree = request("POST", "/git/trees", {
+			base_tree = head.commit.tree.sha,
+			tree = entries,
+		})
+
+		if msg == "" then
+			msg = (#entries == 1) and ("Updated " .. entries[1].path) or (`Updated {#entries} scripts`)
+		end
+
+		----> Make commit
+		local commit = request("POST", "/git/commits", {
+			message = msg,
+			tree = tree.sha,
+			parents = {head.sha},
+		})
+		
+		----> Make branch point to commit
+		request("PATCH", "/git/refs/heads/" .. Functions.encodePath(branch), {
+			sha = commit.sha,
+			force = false,
+		})
+
+		pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Green
+
+		if plugin:GetSetting(Gitsync.Settings.OUTPUTENABLED) then
+			print(`Pushed {#entries} scripts in commit {commit.sha}: {msg}`)
+		end
+	end)
+
+	if not success then
+		warn("Failed to push: ", badnews)
+		pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Red
 	end
 end
 
@@ -168,7 +286,7 @@ end
 ----> Delete file
 function Interactions.deleteFile(filePath, sha)
 	local HttpService = game:GetService("HttpService")
-	local url = "https://api.github.com/repos/".. plugin:GetSetting(Gitsync.Settings.REPOSITORY) .. "/contents/" .. filePath
+	local url = "https://api.github.com/repos/".. plugin:GetSetting(Gitsync.Settings.REPOSITORY).. "/contents/" .. Functions.encodePath(filePath)
 
 	local requestBody = HttpService:JSONEncode({
 		message = "Deleted " .. filePath,

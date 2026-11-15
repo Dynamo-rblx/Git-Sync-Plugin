@@ -27,76 +27,6 @@ end
 
 ---------------------------------------------------
 -- FUNCTION DECLARATIONS
---> Act 1 of Initialize the freaking SHA or die trying. >:(
-function Functions.initPlaceholder()
-	local body = {
-		message = "Initialize repository w/ placeholder",
-		content = "Initialized by GitSync Plugin\n",
-		branch = plugin:GetSetting(Gitsync.Settings.BRANCH) or "main"
-	}
-
-	local headers = {
-		["Authorization"] = "token " .. plugin:GetSetting(Gitsync.Settings.TOKEN),
-		["Accept"] = "application/vnd.github.v3+json"
-	}
-
-	local success, response = pcall(function()
-		return HttpService:RequestAsync({
-			Url = "/contents/"..HttpService:UrlEncode("README.md"),
-			Method = "PUT",
-			Headers = headers,
-			Body = HttpService:JSONEncode(body)
-		})
-	end)
-
-	if not success then return false end
-
-	if response.StatusCode == 200 or response.StatusCode == 201 then return response end
-	return false
-end
-
---> Act 2 of Initialize the freaking SHA or die trying. >:(
-
---> Final Act of Initialize the freaking SHA or die trying. >:(
-function Functions.initializeSHA()
-	local url = "/git/refs/heads/"..(plugin:GetSetting(Gitsync.Settings.BRANCH) or "main")
-	local headers = {
-		["Authorization"] = "token " .. plugin:GetSetting(Gitsync.Settings.TOKEN),
-		["Accept"] = "application/vnd.github.v3+json"
-	}
-
-	local success, response = pcall(function()
-		return HttpService:RequestAsync({
-			Url = url,
-			Method = "GET",
-			Headers = headers
-		})
-	end)
-
-	if success and response.StatusCode == 200 then
-		return HttpService:JSONDecode(response.Body).object.sha
-	end
-
-	local take2 = Functions.initPlaceholder()
-	if take2 then
-		Functions.getFileSHA()
-
-		local success, response = pcall(function()
-			return HttpService:RequestAsync({
-				Url = url,
-				Method = "GET",
-				Headers = headers
-			})
-		end)
-
-		if success and response.StatusCode == 200 then
-			return HttpService:JSONDecode(response.Body).object.sha
-		end
-
-
-	end
-end
-
 ----> Disconnect connections
 function Functions.Disconnect(target: any) : nil
 	for tag, cxn: RBXScriptConnection in Gitsync.Connections do
@@ -197,9 +127,21 @@ function Functions.getScriptPath(scriptFile: BaseScript)
 	return Functions.getFullNameFormatted(scriptFile) .. ".lua"
 end
 
+----> Encode file path for URL
+function Functions.encodePath(path: string): string
+	local segments = path:split("/")
+
+	for i, segment in segments do
+		segments[i] = HttpService:UrlEncode(segment)
+	end
+
+	return table.concat(segments, "/")
+end
+
 ----> Return the contents of a repository
 function Functions.getRepoContents(path: string, pullButton: GuiButton)
-	local url = "https://api.github.com/repos/" .. plugin:GetSetting(Gitsync.Settings.REPOSITORY) .. "/contents/" .. (path or "") .."?ref="..plugin:GetSetting(Gitsync.Settings.BRANCH)
+	local url = "https://api.github.com/repos/".. plugin:GetSetting(Gitsync.Settings.REPOSITORY).. "/contents/" .. Functions.encodePath(path or "").. "?ref=" .. HttpService:UrlEncode(plugin:GetSetting(Gitsync.Settings.BRANCH))
+	
 	local headers = {
 		["Authorization"] = "token " .. plugin:GetSetting(Gitsync.Settings.TOKEN),
 		["Accept"] = "application/vnd.github.v3+json"
@@ -416,8 +358,7 @@ end
 ----> Retrieves latest commit data of specified file path
 function Functions.getFileSHA(filePath: string) : string | nil
 	local HttpService = game:GetService("HttpService")
-	local url = "https://api.github.com/repos/" .. plugin:GetSetting(Gitsync.Settings.REPOSITORY) .. "/contents/" .. filePath.."?ref="..plugin:GetSetting(Gitsync.Settings.BRANCH)
-
+	local url = "https://api.github.com/repos/".. plugin:GetSetting(Gitsync.Settings.REPOSITORY).. "/contents/" .. Functions.encodePath(filePath).. "?ref=" .. HttpService:UrlEncode(plugin:GetSetting(Gitsync.Settings.BRANCH))
 	local headers = {
 		["Authorization"] = "token " .. plugin:GetSetting(Gitsync.Settings.TOKEN),
 		["Accept"] = "application/vnd.github.v3+json"
@@ -444,9 +385,9 @@ function Functions.scanFolder(folder: Instance, path: string) : boolean
 	for _, obj in ipairs(folder:GetChildren()) do
 		if obj:IsA("Script") or obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
 			if obj:IsA("Script") then
-				scriptsSeen[obj.Name] = {["Source"] = ScriptEditorService:GetEditorSource(obj), ["Class"] = obj.ClassName, ["RunContext"] = obj.RunContext, ["Object"] = obj}
+				scriptsSeen[obj] = {["Source"] = ScriptEditorService:GetEditorSource(obj), ["Class"] = obj.ClassName, ["RunContext"] = obj.RunContext, ["Object"] = obj}
 			else
-				scriptsSeen[obj.Name] = {["Source"] = ScriptEditorService:GetEditorSource(obj), ["Class"] = obj.ClassName, ["Object"] = obj}
+				scriptsSeen[obj] = {["Source"] = ScriptEditorService:GetEditorSource(obj), ["Class"] = obj.ClassName, ["Object"] = obj}
 			end
 		end
 
@@ -459,16 +400,16 @@ function Functions.scanFolder(folder: Instance, path: string) : boolean
 end
 
 ----> Get scripts selected by developer and recursively search folders that are descendants of the selected instances
-function Functions.getSelectedScripts() : {BaseScript}
+function Functions.getSelectedScripts() : {[Instance]: any}
 	local selected = Selection:Get()
 	scriptsSeen = {}
 
 	for _, obj in ipairs(selected) do
 		if obj:IsA("Script") or obj:IsA("LocalScript") or obj:IsA("ModuleScript") then
 			if obj:IsA("Script") then
-				scriptsSeen[obj.Name] = {["Source"] = ScriptEditorService:GetEditorSource(obj), ["Class"] = obj.ClassName, ["RunContext"] = obj.RunContext, ["Object"] = obj}
+				scriptsSeen[obj] = {["Source"] = ScriptEditorService:GetEditorSource(obj), ["Class"] = obj.ClassName, ["RunContext"] = obj.RunContext, ["Object"] = obj}
 			else
-				scriptsSeen[obj.Name] = {["Source"] = ScriptEditorService:GetEditorSource(obj), ["Class"] = obj.ClassName, ["Object"] = obj}
+				scriptsSeen[obj] = {["Source"] = ScriptEditorService:GetEditorSource(obj), ["Class"] = obj.ClassName, ["Object"] = obj}
 			end
 		end
 

@@ -74,6 +74,8 @@ if game["Run Service"]:IsEdit() then
 	local waiting = false
 	local running = true
 	local waitTime = 1
+	
+	local selectedscriptrows = {}
 
 	const Gitsync = require("@self/Data")
 
@@ -449,7 +451,7 @@ if game["Run Service"]:IsEdit() then
 	---------------------------------------------------
 	-- RUNTIME CODE
 	----> 20 cycles per second
-	while task.wait(.05) do 
+	while task.wait(.05) do
 		if not running then break end
 		----> Update repository explorer window title
 		explorer_widget.Title = "Git Explorer - "..plugin:GetSetting(Gitsync.Settings.BRANCH)
@@ -466,31 +468,37 @@ if game["Run Service"]:IsEdit() then
 			waiting = false
 		end
 
+
 		----> Update selected scripts list
 		local scripts = Functions.getSelectedScripts()
 
-		for i, v in pairs(frame.ScrollingFrame:GetChildren()) do
-			if not(scripts[v.Name]) and v ~= frame.ScrollingFrame.template and v:IsA("TextLabel") then
-				v:Destroy()
+		for instance, row in selectedscriptrows do
+			if not scripts[instance] then
+				row:Destroy()
+				selectedscriptrows[instance] = nil
 			end
 		end
 
-		for name, data in pairs(scripts) do
-			local scr_frm = frame.ScrollingFrame
+		for instance, data in scripts do
+			local row = selectedscriptrows[instance]
 
-			if not(scr_frm:FindFirstChild(name)) then
-				local temp = frame.ScrollingFrame.template:Clone()
-				temp.Name = name
-				temp.Text = name
-				for k, v in StudioService:GetClassIcon(data.Class) do
-					temp.ImageLabel[k] = v -- Set property
+			if not row then
+				row = frame.ScrollingFrame.template:Clone()
+
+				for property, value in StudioService:GetClassIcon(data.Class) do
+					row.ImageLabel[property] = value
 				end
-				temp.Parent = scr_frm
-				temp.Visible = true
+
+				row.Parent = frame.ScrollingFrame
+				row.Visible = true
+				selectedscriptrows[instance] = row
 			end
 
+			row.Name = instance.Name
+			row.Text = instance.Name
 		end
 	end
+	
 	---------------------------------------------------
 end
 -- END STUDIO CHECK :(
