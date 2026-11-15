@@ -24,7 +24,10 @@ end
 ---------------------------------------------------
 -- FUNCTION DECLARATIONS
 ----> Push selected scripts to specified repository & branch
-function Interactions.pushToGitHub(pushButton)
+function Interactions.pushToGitHub(pushButton, commitmsg)
+	local revisedcommitmsg = (commitmsg or ""):gsub("^%s+", ""):gsub("%s+$", "")
+
+	local scripts = Functions.getSelectedScripts()
 	local scripts = Functions.getSelectedScripts()
 	local url = "https://api.github.com/repos/" .. plugin:GetSetting(Gitsync.Settings.REPOSITORY) .. "/contents/"
 
@@ -58,7 +61,7 @@ function Interactions.pushToGitHub(pushButton)
 		end
 		
 		local requestBody = {
-			message = "Updated " .. filePath,
+			message = revisedcommitmsg ~= "" and revisedcommitmsg or ("Updated " .. filePath),
 			content = Functions.toBase64(scriptWithMetadata),
 			branch = plugin:GetSetting(Gitsync.Settings.BRANCH),
 			sha = Functions.getFileSHA(filePath)
