@@ -224,7 +224,7 @@ if game["Run Service"]:IsEdit() then
 
 		pushButton.ImageLabel.ImageColor3 = Gitsync.Colors.Blue
 
-		Interactions.pushToGitHub(pushButton)
+		Interactions.pushToGitHub(pushButton, frame.commitBOX.Text)
 
 		Functions.populateExplorer(explorer_frame.ScrollingFrame, "")
 
