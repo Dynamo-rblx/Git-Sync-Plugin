@@ -1,0 +1,4 @@
+<script>
+  document.documentElement.classList.toggle("dark", localStorage.getItem("theme") === "dark");
+  document.documentElement.classList.add(localStorage.getItem("html-layout") || "layout-fixed");
+</script>

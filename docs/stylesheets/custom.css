@@ -175,3 +175,42 @@ header a[data-slot="button"] > h1 {
   background-color: var(--highlight);
   border-color: transparent;
 }
+
+/* Make the trigger look like clickable text. */
+.nav-guide {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.nav-guide:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 4px;
+}
+
+button.nav-guide,
+button.nav-guide:hover,
+button.nav-guide:active {
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--link) !important;
+}
+
+/* Smoothly introduce and remove the highlight. */
+[data-slot="sidebar-menu"] a[href] {
+  transition: background-color 350ms;
+}
+
+[data-slot="sidebar-menu"] a.nav-highlight {
+  background-color: var(--highlight) !important;
+  /* color: var(--highlight) !important; */
+
+  /* box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--link) 12%, transparent); */
+}

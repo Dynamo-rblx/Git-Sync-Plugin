@@ -13,7 +13,7 @@
 - Bug fix: Fixed yielding problem in base64 functions
 
 
-## v1-12-43: [July 9th, 2025](devforum.roblox.com/t/gitsync-update-1-12-43/3807173/1)
+## v1-12-43: [July 9th, 2025](https://devforum.roblox.com/t/gitsync-update-1-12-43/3807173/1)
 - Bug fix: Changed typo that caused push button to react when pull button fails.
 - Bug fix: Fixed an error that prevented pulling
 

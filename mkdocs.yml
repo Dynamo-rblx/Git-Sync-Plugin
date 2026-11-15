@@ -13,6 +13,7 @@ theme:
   accent: "#2563eb"
   icon: assets/logo.png
   favicon: assets/favicon.png
+  custom_dir: overrides
 
 nav:
   - Home: index.md
@@ -44,5 +45,9 @@ nav:
 plugins:
   - search
 
+extra_javascript:
+  - javascripts/nav-highlight.js
+
 extra_css:
+  - https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css
   - stylesheets/custom.css
