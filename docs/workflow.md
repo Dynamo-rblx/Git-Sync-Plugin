@@ -8,7 +8,7 @@ Every Git project is called a **repository**, and you can think of it as the fol
 
 The fact that all commits point to their predecessor allows for the branching structure of version history, where multiple commits can stem from the same origin. We call each of these paths a **branch**, and it's relatively intuitive to visualize. **Merging** is when you combine branches by applying the changes present up to the latest commit on one branch as a single new commit whose predecessor is the latest commit on another branch.
 
-### GitHub
+## GitHub
 
 GitHub isn't the same as Git. Evidently. It is getting its own section.
 
@@ -28,15 +28,21 @@ Essentially, GitSync features are meant to improve our ability to preserve and u
 
 With a vague mission statement like that, you might be inclined to ask about things like diff view and version-controlling instances beyond scripts. And you'd be right to. In general, when considering feature requests or suggested improvements, returning to this mission statement might help.
 
-<!-- Briefly distinguish Git version control, GitHub repository hosting, and GitSync's connection between Studio and GitHub. Introduce repositories, commits, and branches without assuming prior Git knowledge. -->
+## An Overview of Operations
 
-## How Scripts Move Between Studio and GitHub
+GitSync enables pushing, pulling, branch-selection, and remote repository browsing. It does **not** run operations automatically. And in-case of a problem, all operations are programmed to be reversable.
 
-<!-- Explain that pushing uploads selected Studio scripts and pulling retrieves remote scripts. Operations are manual; editing a script does not automatically synchronize it. -->
+To upload scripts, you push them. You select scripts or ancestors of scripts in the Studio Explorer, and you press the push button. Selected scripts whose paths match existing GitHub repository paths will update the script in the repository on the corresponding path. If there is no existing path, a new file corresponding with the script will be created.
 
-<!-- Explain that the configured repository and branch determine the remote destination/source. -->
+To import scripts or directories, you pull them. When pulling scripts, those with paths matching existing repository scripts will be overwritten. Pulling directories, however, will **never** overwrite existing scripts.
 
-## A Typical GitSync Workflow
+To switch branches, you either type or select a branch from the Config window.
+
+Again, operations are manual. Thus, editing a script does not automatically synchronize it.
+
+Lastly (and importantly), the destinatiomn/source of pushing and pulling operations are decided by your branch, repository, and the attribute metadata on each script. Pulled scripts have easily-removable metadata attributes storing the path and repository just so that they can be pushed to the correct corresponding script even if they are moved. Scripts without these attributes are just organized automatically by their absolute path in Studio.
+
+## Setting Things Up
 
 <!-- Walk through connecting a repository, selecting scripts, pushing, making changes, and pulling updates when needed. Link to the detailed setup and feature pages. -->
 
@@ -46,7 +52,7 @@ With a vague mission statement like that, you might be inclined to ask about thi
 
 <!-- Distinguish operations available inside GitSync from pull requests and merging performed on GitHub. Changing GitSync's branch setting does not automatically replace Studio scripts. -->
 
-## Working Across Sessions or with Other Developers
+## Collaboration
 
 <!-- Explain checking the selected branch and remote changes before replacing scripts. Cover coordinating edits and reviewing changes on GitHub. -->
 
