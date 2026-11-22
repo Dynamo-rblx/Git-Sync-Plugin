@@ -22,6 +22,12 @@
 
 ## Verify the Connection
 
+Once you think you've got everything set, it's not hard to test and make sure. The two best things to do are to open the Repository Viewer and to load the branch list.
+
+When you open the Repository Viewer, you should see the files according to the latest commit on your current branch.
+
+If either of these tests fails, try the methods in <button class="nav-guide" style="color: var(--theme-accent);" data-highlight-pages="troubleshooting">Troubleshooting</button> or contact *Roller_Bott* on DevForum directly (DM or post reply).
+
 <!-- Explain opening Repository Viewer and loading the branch list. Describe what users should expect for an existing repository versus an empty one. -->
 
 <!-- Link to Troubleshooting if access fails, and to Pushing and Pulling for the first operation. -->
