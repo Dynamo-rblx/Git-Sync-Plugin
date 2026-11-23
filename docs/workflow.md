@@ -28,9 +28,27 @@ Essentially, GitSync features are meant to improve our ability to preserve and u
 
 With a vague mission statement like that, you might be inclined to ask about things like diff view and version-controlling instances beyond scripts. And you'd be right to. In general, when considering feature requests or suggested improvements, returning to this mission statement might help.
 
+## A Brief Setup Guide
+
+Let's assume you've got the plugin installed and that you can see the Menu, Config, and Info icons in the plugin toolbar.
+
+Before you can even connect a repository, you need to create a **classic** token on GitHub by going to `Settings -> Developer Settings` (it's intuitive from there) and allowing `repo` permissions. Copy the token, because you only get to see it once.
+
+Open the Menu window, and paste your token into the text-box below the top one. The plugin hides your token on de-selection and saves your information across sessions.
+
+Next, you need to copy the `username/repository_name` part of the repository you want to use. It doesn't matter whether you just made it or whether it's someone else's public repo. Paste the phrase you copied in the top text-box on the same Menu window.
+
+You're all set up for action.
+
+<!-- TODO Can we make it so that hovering over a piece of text within "keyword" tags triggers a small vertically-scrollabe width-wise-rectangular pop-up that displays an associated definition from a dataset? -->
+
+> For more details on plugin setup, visit the dedicated <button class="nav-guide" style="color: var(--theme-accent);" data-highlight-pages="plugin-setup">Plugin Setup</button> page.
+
+<!-- Walk through connecting a repository, selecting scripts, pushing, making changes, and pulling updates when needed. Link to the detailed setup and feature pages. -->
+
 ## An Overview of Operations
 
-GitSync enables pushing, pulling, branch-selection, and remote repository browsing. It does **not** run operations automatically. And in-case of a problem, all operations are programmed to be reversable.
+GitSync enables pushing, pulling, branch-selection, and remote repository browsing. It does **not** run operations automatically. Thus, editing a script does not automatically synchronize it. And in-case of a problem, all operations are programmed to be reversable.
 
 To upload scripts, you push them. You select scripts or ancestors of scripts in the Studio Explorer, and you press the push button. Selected scripts whose paths match existing GitHub repository paths will update the script in the repository on the corresponding path. If there is no existing path, a new file corresponding with the script will be created.
 
@@ -38,21 +56,35 @@ To import scripts or directories, you pull them. When pulling scripts, those wit
 
 To switch branches, you either type or select a branch from the Config window.
 
-Again, operations are manual. Thus, editing a script does not automatically synchronize it.
-
 Lastly (and importantly), the destinatiomn/source of pushing and pulling operations are decided by your branch, repository, and the attribute metadata on each script. Pulled scripts have easily-removable metadata attributes storing the path and repository just so that they can be pushed to the correct corresponding script even if they are moved. Scripts without these attributes are just organized automatically by their absolute path in Studio.
 
-## Setting Things Up
-
-<!-- Walk through connecting a repository, selecting scripts, pushing, making changes, and pulling updates when needed. Link to the detailed setup and feature pages. -->
+> For more information on pushing, pulling, and branches, visit the dedicated <button class="nav-guide" style="color: var(--theme-accent);" data-highlight-pages="plugin-setup">Plugin Setup</button> page.
 
 ## Working with Branches
 
-<!-- Explain using a separate branch for changes. Relate this to GitHub Flow: create a branch, make changes, open a pull request, review, and merge. -->
+As earlier stated, GitSync facilitates branch creation and branch switching. Unlike Git's branch-switching mechanism, GitSync does not automatically change the code in all of your scripts.
 
-<!-- Distinguish operations available inside GitSync from pull requests and merging performed on GitHub. Changing GitSync's branch setting does not automatically replace Studio scripts. -->
+Rather, the Repository Viewer will display the contents of the current branch according to that branch's latest commit. Updating scripts to match the information on the current branch requires a manual pull operation with the relevant scripts selected.
+
+The plugin leaves pull request, review, and other merge behavior to GitHub, since the GitHub site's existing merge/PR interface already makes these potentially complex operations very efficient to work with.
+
+So you cannot open pull requests or merge branches remotely. And, you cannot create or otherwise handle local branches. They don't exist. As we established, GitSync is *not* a copy of Git adapted to Roblox Studio: there is no real local repository.
 
 ## Collaboration
+
+One big risk of multiple programmers collaborating with GitSync is stepping on each other's feet. That is, overwriting each other's edits due to a lack of coordination.
+
+Using the Repository Viewer, you can manually compare the latest commit on your current branch to what's actually in your current code using the file preview operation (clicking any file in the Viewer).
+
+You can also review the changes made after pushing by viewing the GitHub commit and roll it back if anything went wrong.
+
+You want to make sure you're changing what you want to change to what you want to change to. What a sentence. Basically, if you have A -> B, you want to make sure A and B are both exactly what you think they are, or you could end up having to roll back implementation.
+
+More comprehensive file-comparison and staged-change-preview features are planned.
+
+Since no operation is automatic, GitSync does not provide continuous synchronization. There is no notification from the plugin that a new commit has been made on your repository or branch, so you'd want to (one way or another) communicate and listen to your team intently when it comes to updates.
+
+Because Roblox Studio enables multiple collaborators to work remotely on the same game together, collaboration via GitHub is not hugely relevant. It'd mostly come into play in individually unique situations. Even when collaborators are working in different places, on the same game, there are linked packages for that.
 
 <!-- Explain checking the selected branch and remote changes before replacing scripts. Cover coordinating edits and reviewing changes on GitHub. -->
 
